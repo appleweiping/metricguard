@@ -1,0 +1,3 @@
+{"id":"normalized-match","reference":"The answer is Paris.","prediction":"the answer is paris","tags":["normalization"]}
+{"id":"different-answer","reference":"Paris","prediction":"Lyon","tags":["negative"]}
+{"id":"unicode-match","reference":"Café","prediction":"Café","tags":["unicode"]}

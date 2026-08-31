@@ -1,0 +1,3 @@
+{"id":"percent","reference":"25%","prediction":"0.25"}
+{"id":"thousands","reference":"1,024","prediction":1024}
+{"id":"within-tolerance","reference":"10","prediction":"10.0005"}

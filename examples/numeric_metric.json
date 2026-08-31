@@ -1,0 +1,7 @@
+{
+  "kind": "numeric_equivalence",
+  "absolute_tolerance": "0.001",
+  "relative_tolerance": "0",
+  "allow_percent": true,
+  "allow_commas": true
+}
