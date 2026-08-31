@@ -1,0 +1,3 @@
+{"id":"capital","reference":"Paris is the capital of France","prediction":"The capital is Lyon","tags":["facts"]}
+{"id":"color","reference":"red green blue","prediction":"red blue","tags":["short"]}
+{"id":"empty","reference":"","prediction":"none","tags":["edge-case"]}

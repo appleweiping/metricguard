@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If MetricGuard supports your work, cite the software using this metadata."
+title: MetricGuard
+type: software
+authors:
+  - family-names: Wei
+    given-names: Ping
+repository-code: "https://github.com/appleweiping/metricguard"
+url: "https://github.com/appleweiping/metricguard"
+license: MIT
+version: 0.2.0
+date-released: 2026-08-31

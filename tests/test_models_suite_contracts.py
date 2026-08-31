@@ -20,6 +20,18 @@ def cases() -> tuple[EvaluationCase, ...]:
     )
 
 
+def test_suite_rejects_metric_protocol_output_violation() -> None:
+    class BadMetric:
+        name = "bad"
+
+        def evaluate(self, reference: object, prediction: object) -> object:
+            del reference, prediction
+            return 0.5
+
+    with pytest.raises(TypeError, match="expected MetricValue"):
+        EvaluationSuite(cases()).run(BadMetric())  # type: ignore[arg-type]
+
+
 def test_case_validation() -> None:
     with pytest.raises(ValueError, match="must not be empty"):
         EvaluationCase(" ", "a", "b")

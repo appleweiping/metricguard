@@ -6,6 +6,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .venv/
+.release-smoke-*/
+.wheel-smoke-*/
 build/
 dist/
 htmlcov/

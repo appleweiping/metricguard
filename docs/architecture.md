@@ -12,7 +12,11 @@ MetricGuard separates raw metric semantics from suite policy.
    Metrics may return an undefined value, but do not decide how it affects an aggregate.
 4. `suite` applies `UndefinedPolicy`, producing one `CaseResult` per input case.
 5. `contracts` performs independent behavioral checks.
-6. `reporting` creates a versioned dictionary and the two supported renderings.
+6. `registry` owns built-in factories and explicit entry-point discovery.
+7. `statistics` performs deterministic paired-bootstrap estimation and a separate
+   paired sign-flip randomization test.
+8. `comparison` verifies dataset alignment before evaluating two model runs.
+9. `reporting` creates versioned dictionaries and JSON/Markdown renderings.
 
 This direction keeps I/O and presentation out of metric implementations. A custom
 metric only needs a stable `name` and an `evaluate(reference, prediction)` method.
@@ -26,6 +30,16 @@ metric only needs a stable `name` and an `evaluate(reference, prediction)` metho
 
 Metric exceptions are not swallowed. A crashing metric is different from a metric
 that intentionally declares a comparison undefined.
+
+Plugin discovery is a trust boundary. Importing an entry point executes installed
+third-party code, so the default registry contains built-ins only. A caller or CLI
+user must opt in before discovery. Registry mutation is atomic, but in-process
+plugin imports are executable code and cannot be sandboxed or rolled back.
+
+Paired comparison is a data-integrity boundary. IDs may arrive in a different order,
+but references and tag sets must match by ID. One metric configuration evaluates
+both sides. Python's equality rule that
+`True == 1` is deliberately not used for nested JSON-like references.
 
 ## Versioning
 

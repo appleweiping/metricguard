@@ -15,7 +15,15 @@ from metricguard.models import (
     SuiteReport,
     UndefinedPolicy,
 )
-from metricguard.reporting import render_json, render_markdown, report_to_dict
+from metricguard.reporting import (
+    comparison_to_dict,
+    render_comparison_json,
+    render_comparison_markdown,
+    render_json,
+    render_markdown,
+    report_to_dict,
+)
+from metricguard.statistics import BootstrapConfig, paired_comparison
 from metricguard.suite import EvaluationSuite
 
 
@@ -152,7 +160,7 @@ def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(["--version"])
     assert error.value.code == 0
-    assert capsys.readouterr().out == "metricguard 0.1.0\n"
+    assert capsys.readouterr().out == "metricguard 0.2.0\n"
 
 
 def test_cli_run_markdown_and_json_output(
@@ -224,3 +232,179 @@ def test_cli_invalid_tolerance_is_a_clean_error(
     captured = capsys.readouterr()
     assert "finite decimal" in captured.err
     assert "Traceback" not in captured.err
+
+
+def test_comparison_report_formats_are_stable() -> None:
+    baseline = EvaluationSuite([EvaluationCase("one", "yes", "no")]).run(ExactMatch())
+    candidate = EvaluationSuite([EvaluationCase("one", "yes", "yes")]).run(ExactMatch())
+    comparison = paired_comparison(
+        baseline, candidate, config=BootstrapConfig(samples=7, confidence=0.8)
+    )
+    payload = comparison_to_dict(comparison)
+    assert payload["schema_version"] == 1
+    assert payload["gate"]["passed"] is True
+    assert payload["methods"]["p_value"] == "paired-sign-flip-monte-carlo-v1"
+    assert payload["methods"]["p_value_samples"] == 7
+    assert json.loads(render_comparison_json(comparison))["delta"]["point"] == 1.0
+    markdown = render_comparison_markdown(comparison)
+    assert "Regression gate: **PASS**" in markdown
+    assert "80% paired-bootstrap interval" in markdown
+
+
+def test_cli_compare_passes_and_fails_regression_gate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl",
+        '{"id":"a","reference":"yes","prediction":"no"}\n'
+        '{"id":"b","reference":"yes","prediction":"yes"}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl",
+        '{"id":"b","reference":"yes","prediction":"yes"}\n'
+        '{"id":"a","reference":"yes","prediction":"yes"}\n',
+    )
+    assert (
+        main(
+            [
+                "compare",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--samples",
+                "31",
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["delta"]["point"] == 0.5
+    assert payload["gate"]["passed"] is True
+
+    assert (
+        main(
+            [
+                "compare",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--samples",
+                "7",
+                "--minimum-delta",
+                "0.75",
+            ]
+        )
+        == 2
+    )
+    assert "Regression gate: **FAIL**" in capsys.readouterr().out
+
+
+def test_cli_compare_rejects_dataset_drift(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl", '{"id":"a","reference":"yes","prediction":"no"}\n'
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl", '{"id":"a","reference":"no","prediction":"no"}\n'
+    )
+    assert (
+        main(
+            [
+                "compare",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--samples",
+                "3",
+            ]
+        )
+        == 2
+    )
+    assert "different references" in capsys.readouterr().err
+
+
+def test_cli_compare_supports_lower_is_better_direction(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes"}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl",
+        '{"id":"a","reference":"yes","prediction":"no"}\n',
+    )
+    assert (
+        main(
+            [
+                "compare",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--samples",
+                "7",
+                "--direction",
+                "lower",
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["delta"]["point"] == -1.0
+    assert payload["improvement"]["point"] == 1.0
+    assert payload["improvement"]["direction"] == "lower"
+
+
+def test_cli_refuses_to_overwrite_any_input(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes"}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl",
+        '{"id":"a","reference":"yes","prediction":"no"}\n',
+    )
+    original_baseline = baseline.read_text(encoding="utf-8")
+    assert (
+        main(
+            [
+                "compare",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--output",
+                str(baseline),
+            ]
+        )
+        == 2
+    )
+    assert baseline.read_text(encoding="utf-8") == original_baseline
+    assert "output path must differ" in capsys.readouterr().err
+
+    original_candidate = candidate.read_text(encoding="utf-8")
+    assert (
+        main(
+            [
+                "run",
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--output",
+                str(candidate),
+            ]
+        )
+        == 2
+    )
+    assert candidate.read_text(encoding="utf-8") == original_candidate

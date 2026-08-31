@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 from .contracts import ContractAuditor
 from .metrics import Metric
-from .models import CaseResult, EvaluationCase, SuiteReport, UndefinedPolicy
+from .models import CaseResult, EvaluationCase, MetricValue, SuiteReport, UndefinedPolicy
 
 
 class EvaluationSuite:
@@ -45,6 +45,10 @@ class EvaluationSuite:
         results: list[CaseResult] = []
         for case in self.cases:
             raw = metric.evaluate(case.reference, case.prediction)
+            if not isinstance(raw, MetricValue):
+                raise TypeError(
+                    f"metric {metric.name!r} returned {type(raw).__name__}, expected MetricValue"
+                )
             if raw.score is not None:
                 results.append(CaseResult(case.case_id, raw, raw.score))
                 continue

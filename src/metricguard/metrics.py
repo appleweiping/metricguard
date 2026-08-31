@@ -7,10 +7,24 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from .models import MetricValue
 from .normalizers import TextNormalizer
+
+if TYPE_CHECKING:
+    from .registry import MetricRegistry
+
+
+BUILTIN_METRIC_NAMES = (
+    "character_f1",
+    "exact_match",
+    "levenshtein_similarity",
+    "numeric_equivalence",
+    "rouge_l",
+    "sentence_bleu",
+    "token_f1",
+)
 
 
 @runtime_checkable
@@ -220,20 +234,8 @@ def _boolean_option(options: dict[str, Any], name: str) -> bool:
     return value
 
 
-def build_metric(config: str | dict[str, Any]) -> Metric:
-    """Build a built-in metric from a name or JSON-compatible object."""
-
-    if isinstance(config, str):
-        kind = config
-        options: dict[str, Any] = {}
-    elif isinstance(config, dict):
-        options = dict(config)
-        kind_value = options.pop("kind", None)
-        if not isinstance(kind_value, str):
-            raise ValueError("metric configuration requires a string 'kind'")
-        kind = kind_value
-    else:
-        raise TypeError("metric configuration must be a string or object")
+def _build_builtin_metric(kind: str, options: dict[str, Any]) -> Metric:
+    """Build one built-in metric from an already separated name and options."""
 
     if kind == "exact_match":
         normalizer = (
@@ -276,4 +278,78 @@ def build_metric(config: str | dict[str, Any]) -> Metric:
             allow_percent=_boolean_option(options, "allow_percent"),
             allow_commas=_boolean_option(options, "allow_commas"),
         )
+    if kind == "rouge_l":
+        from .advanced_metrics import RougeL
+
+        normalizer = (
+            _normalizer_from_config(options)
+            if "normalizer" in options
+            else TextNormalizer(lowercase=True, strip_punctuation=True)
+        )
+        unexpected = set(options) - {"normalizer", "beta"}
+        if unexpected:
+            raise ValueError(f"unknown rouge_l options: {', '.join(sorted(unexpected))}")
+        beta = options.get("beta", 1.0)
+        if isinstance(beta, bool) or not isinstance(beta, (int, float)):
+            raise ValueError("metric option 'beta' must be a real number")
+        return RougeL(normalizer=normalizer, beta=float(beta))
+    if kind == "sentence_bleu":
+        from .advanced_metrics import SentenceBleu
+
+        normalizer = (
+            _normalizer_from_config(options)
+            if "normalizer" in options
+            else TextNormalizer(lowercase=True, strip_punctuation=True)
+        )
+        unexpected = set(options) - {"normalizer", "max_order", "smooth", "effective_order"}
+        if unexpected:
+            raise ValueError(f"unknown sentence_bleu options: {', '.join(sorted(unexpected))}")
+        max_order = options.get("max_order", 4)
+        smooth = options.get("smooth", 1.0)
+        effective_order = options.get("effective_order", True)
+        if isinstance(max_order, bool) or not isinstance(max_order, int):
+            raise ValueError("metric option 'max_order' must be an integer")
+        if isinstance(smooth, bool) or not isinstance(smooth, (int, float)):
+            raise ValueError("metric option 'smooth' must be a real number")
+        if type(effective_order) is not bool:
+            raise ValueError("metric option 'effective_order' must be a boolean")
+        return SentenceBleu(
+            normalizer=normalizer,
+            max_order=max_order,
+            smooth=float(smooth),
+            effective_order=effective_order,
+        )
+    if kind == "levenshtein_similarity":
+        from .advanced_metrics import LevenshteinSimilarity
+
+        normalizer = (
+            _normalizer_from_config(options) if "normalizer" in options else TextNormalizer()
+        )
+        unexpected = set(options) - {"normalizer"}
+        if unexpected:
+            raise ValueError(
+                f"unknown levenshtein_similarity options: {', '.join(sorted(unexpected))}"
+            )
+        return LevenshteinSimilarity(normalizer=normalizer)
     raise ValueError(f"unknown metric kind: {kind}")
+
+
+def build_metric(
+    config: str | dict[str, Any],
+    *,
+    registry: MetricRegistry | None = None,
+    load_plugins: bool = False,
+) -> Metric:
+    """Build a metric from a strict configuration.
+
+    Third-party entry points are never imported implicitly. Set
+    ``load_plugins=True`` or provide a registry whose plugins have already
+    been discovered when plugin execution is explicitly desired.
+    """
+
+    from .registry import MetricRegistry
+
+    active = registry or MetricRegistry.with_builtins()
+    if load_plugins:
+        active.load_plugins()
+    return active.build(config)

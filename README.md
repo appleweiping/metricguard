@@ -11,17 +11,22 @@ documented range. MetricGuard records those decisions next to the cases that dep
 on them.
 
 [![CI](https://github.com/appleweiping/metricguard/actions/workflows/ci.yml/badge.svg)](https://github.com/appleweiping/metricguard/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://www.python.org/)
+[![CodeQL](https://github.com/appleweiping/metricguard/actions/workflows/codeql.yml/badge.svg)](https://github.com/appleweiping/metricguard/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/appleweiping/metricguard/badge)](https://scorecard.dev/viewer/?uri=github.com/appleweiping/metricguard)
+[![Release](https://img.shields.io/github/v/release/appleweiping/metricguard?sort=semver)](https://github.com/appleweiping/metricguard/releases)
+[![Python](https://img.shields.io/badge/python-3.10--3.14-3776AB)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## What it does
 
-- Evaluates JSON or JSONL cases with built-in exact, token, character, and numeric metrics.
+- Evaluates JSON or JSONL cases with seven dependency-free text and numeric metrics.
 - Keeps normalization policies explicit instead of hiding them in preprocessing code.
 - Distinguishes an undefined result from a numeric zero.
 - Resolves undefined values with one of four policies: `error`, `skip`, `zero`, or `one`.
 - Audits metric contracts using observed and generated comparisons.
 - Produces deterministic JSON for automation and Markdown for review.
+- Compares aligned model runs with deterministic paired resampling and CI gates.
+- Loads third-party metric entry points only after an explicit opt-in.
 - Uses only the Python standard library at runtime.
 
 MetricGuard is an evaluation reliability tool. It is not a leaderboard service, a
@@ -41,6 +46,9 @@ flowchart LR
     H --> I
     I --> J[Markdown]
     I --> K[Versioned JSON]
+    L[Baseline + candidate] --> M[Alignment checks]
+    M --> N[Paired bootstrap + sign-flip test]
+    N --> O[Direction-aware regression gate]
 ```
 
 The raw metric returns `MetricValue(score=None, reason=...)` when a comparison is
@@ -103,6 +111,19 @@ metricguard run examples/numeric_cases.jsonl \
 Exit code `0` means the run and its requested contracts passed. Exit code `2`
 means input/configuration failed or an audited contract produced an error.
 
+Compare two aligned prediction files and fail CI when the observed mean regresses:
+
+```bash
+metricguard compare examples/baseline_cases.jsonl examples/candidate_cases.jsonl \
+  --metric rouge_l --samples 2000 --confidence 0.95 \
+  --minimum-delta 0 --format json --output comparison.json
+```
+
+For a stricter statistical gate, add `--minimum-lower-bound 0`; this requires
+the complete confidence interval to exclude a regression. Baseline and candidate
+IDs, references, and tag sets must agree. File and tag order may differ. All built-in
+metrics are higher-is-better; pass `--direction lower` for a lower-is-better plugin.
+
 ## Python API
 
 ```python
@@ -142,9 +163,42 @@ print(report.mean_score)
 | `token_f1` | `[0, 1]` | Counts duplicate tokens; both empty is `1` |
 | `character_f1` | `[0, 1]` | Character multiset overlap after normalization |
 | `numeric_equivalence` | `0`, `1`, or undefined | Percent and comma parsing are opt-in |
+| `rouge_l` | `[0, 1]` | Pairwise token LCS F-score; configurable beta |
+| `sentence_bleu` | `[0, 1]` | Single-reference BLEU with explicit smoothing and effective order |
+| `levenshtein_similarity` | `[0, 1]` | Normalized character edit similarity |
 
 Numeric equivalence uses decimal arithmetic for parsing and tolerance decisions. A
 non-numeric value is undefined rather than silently treated as a wrong number.
+`rouge_l` and `sentence_bleu` deliberately document their local semantics; they do
+not claim byte-for-byte equivalence with an external ROUGE, SacreBLEU, or corpus
+BLEU package.
+
+## Statistical comparison
+
+`BootstrapConfig` uses a versioned deterministic resampling stream, so the same
+scores, seed, sample count, and package version produce the same percentile
+interval on supported Python versions. `paired_comparison` resamples per-case
+candidate-minus-baseline deltas; it does not compare two unrelated aggregate means.
+The reported p-value comes from a separate paired sign-flip randomization test,
+not from treating the ordinary bootstrap distribution as a null distribution.
+The configured sample count controls both procedures.
+
+Skipped cases must be skipped on both sides. A one-sided skip is an error because
+it silently changes the evaluated population. Tag summaries are available through
+`summarize_by_tag`. See [statistical comparison](docs/statistical-comparison.md).
+
+## Metric plugins
+
+Plugins register a factory under the `metricguard.metrics` entry-point group.
+Discovery is never performed by a normal `build_metric` call. Call
+`build_metric(..., load_plugins=True)`, `MetricRegistry.load_plugins()`, or pass
+`--load-plugins` on the CLI to explicitly import installed plugin code. See
+[the plugin contract](docs/plugins.md).
+
+Plugin imports execute trusted third-party Python in the current process; this is
+opt-in discovery, not sandboxing. Comparison uses one metric instance and assumes
+its evaluation is deterministic. Select the correct optimization direction before
+using a plugin score as a regression gate.
 
 ## Contracts
 
@@ -185,7 +239,7 @@ contract.
 
 1. Runtime behavior is deterministic for built-in metrics.
 2. An undefined value is never converted without a named policy.
-3. JSON reports carry a schema version and stable key ordering.
+3. Suite and comparison JSON reports carry a schema version and stable key ordering.
 4. Normalization is local to a metric configuration.
 5. Contract auditing does not mutate cases or metric configuration.
 
@@ -196,8 +250,9 @@ then silently ignored.
 
 - MetricGuard does not download datasets or call model APIs.
 - Built-in tokenization is whitespace-based after explicit normalization.
-- Aggregate reporting currently provides a macro mean, not bootstrap confidence intervals.
 - `repr` is used only to avoid duplicate generated identity checks; it is not a corpus fingerprint.
+- Bootstrap intervals quantify sampling variation in a fixed case set; they do not
+  correct dataset bias, label leakage, or metric validity.
 
 ## Development
 
@@ -208,15 +263,15 @@ mypy src
 pytest
 ```
 
-CI runs these checks on Python 3.10 through 3.13. See
+CI runs these checks on supported Python versions. A reproducible synthetic benchmark
+is available in [`benchmarks/`](benchmarks/README.md). See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the review and release workflow.
 
 ## Roadmap
 
-- User-defined metric plugins through entry points.
-- Tag-grouped summaries and paired comparison reports.
-- Confidence interval contracts for stochastic evaluators.
-- A versioned migration command if the JSON report schema changes.
+- Streaming aggregation for evaluation suites that exceed memory.
+- Multiple-comparison corrections for large metric families.
+- A versioned migration command when a report schema changes.
 
 ## License
 

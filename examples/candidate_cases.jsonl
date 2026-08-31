@@ -1,0 +1,3 @@
+{"id":"empty","reference":"","prediction":"","tags":["edge-case"]}
+{"id":"color","reference":"red green blue","prediction":"red green blue","tags":["short"]}
+{"id":"capital","reference":"Paris is the capital of France","prediction":"Paris is the capital of France","tags":["facts"]}
