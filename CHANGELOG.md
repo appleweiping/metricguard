@@ -1,21 +1,30 @@
 # Changelog
 
-All notable changes follow semantic versioning.
+All notable changes follow the principles of Keep a Changelog.
 
-## 0.2.0 - 2026-08-31
+## [Unreleased]
 
-- Add pairwise ROUGE-L, sentence BLEU, and normalized Levenshtein similarity.
-- Add deterministic percentile confidence intervals and paired-bootstrap comparisons.
-- Add strict baseline/candidate alignment and configurable CI regression gates.
-- Add tag-grouped summaries and versioned comparison JSON/Markdown reports.
-- Add an explicit metric registry and opt-in `metricguard.metrics` entry-point discovery.
-- Add comparison examples, statistical/plugin documentation, and a reproducible benchmark.
-- Use a paired sign-flip randomization p-value, explicit optimization direction,
-  atomic plugin registration, and overwrite-safe CLI outputs.
+## [0.2.0] - 2026-08-31
 
-## 0.1.0 - 2026-08-31
+### Added
 
-- Add strict JSON/JSONL evaluation case loading.
-- Add exact, token F1, character F1, and numeric equivalence metrics.
-- Add explicit undefined-result policies and behavior contracts.
-- Add JSON and Markdown reports, CLI, tests, examples, and CI.
+- Pairwise ROUGE-L, sentence BLEU, and normalized Levenshtein similarity.
+- Deterministic percentile confidence intervals and paired-bootstrap comparisons.
+- Strict baseline/candidate alignment and configurable CI regression gates.
+- Tag-grouped summaries and versioned comparison JSON/Markdown reports.
+- An explicit metric registry and opt-in `metricguard.metrics` entry-point discovery.
+- Comparison examples, statistical and plugin documentation, and a reproducible benchmark.
+
+### Changed
+
+- Comparisons use a paired sign-flip randomization p-value and an explicit optimization direction.
+- Plugin registration is atomic, and CLI outputs are overwrite-safe.
+
+## [0.1.0] - 2026-08-31
+
+### Added
+
+- Strict JSON/JSONL evaluation case loading.
+- Exact, token F1, character F1, and numeric equivalence metrics.
+- Explicit undefined-result policies and behavior contracts.
+- JSON and Markdown reports, CLI, tests, examples, and CI.
