@@ -29,6 +29,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
+  "bandit>=1.7",
   "build>=1.2",
   "mypy>=1.11",
   "pytest>=8.2",
@@ -72,3 +73,6 @@ python_version = "3.10"
 strict = true
 packages = ["metricguard"]
 mypy_path = "src"
+
+[tool.bandit]
+targets = ["src"]
