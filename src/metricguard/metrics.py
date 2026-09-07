@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from .models import MetricValue
 from .normalizers import TextNormalizer
+from .ranking import RANKING_METRICS, RankingMetric
 
 if TYPE_CHECKING:
     from .registry import MetricRegistry
 
 
 BUILTIN_METRIC_NAMES = (
+    *RANKING_METRICS,
     "character_f1",
     "exact_match",
     "levenshtein_similarity",
@@ -236,6 +238,12 @@ def _boolean_option(options: dict[str, Any], name: str) -> bool:
 
 def _build_builtin_metric(kind: str, options: dict[str, Any]) -> Metric:
     """Build one built-in metric from an already separated name and options."""
+
+    if kind in RANKING_METRICS:
+        unexpected = set(options) - {"k"}
+        if unexpected:
+            raise ValueError(f"unknown ranking options: {', '.join(sorted(unexpected))}")
+        return RankingMetric(name=kind, k=options.get("k", 10))
 
     if kind == "exact_match":
         normalizer = (

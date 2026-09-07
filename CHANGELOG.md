@@ -4,6 +4,11 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+
+- Five configurable retrieval metrics with explicit cutoff, relevance, short-run,
+  duplicate-document, and undefined-result policies, available through the metric registry.
+
 ## [0.2.0] - 2026-08-31
 
 ### Added

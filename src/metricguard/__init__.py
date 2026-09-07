@@ -14,6 +14,7 @@ from .models import (
     UndefinedPolicy,
 )
 from .normalizers import TextNormalizer
+from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .statistics import (
     BootstrapConfig,
@@ -42,6 +43,7 @@ __all__ = [
     "MetricRegistry",
     "MetricValue",
     "PairedComparison",
+    "RankingMetric",
     "RougeL",
     "SentenceBleu",
     "Severity",
