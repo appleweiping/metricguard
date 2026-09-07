@@ -16,6 +16,7 @@ from .models import (
 from .normalizers import TextNormalizer
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
+from .runner import MetricRunner, RunnerReport
 from .statistics import (
     BootstrapConfig,
     ConfidenceInterval,
@@ -41,10 +42,12 @@ __all__ = [
     "Metric",
     "MetricPluginError",
     "MetricRegistry",
+    "MetricRunner",
     "MetricValue",
     "PairedComparison",
     "RankingMetric",
     "RougeL",
+    "RunnerReport",
     "SentenceBleu",
     "Severity",
     "SuiteReport",

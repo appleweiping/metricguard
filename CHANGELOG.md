@@ -8,6 +8,7 @@ All notable changes follow the principles of Keep a Changelog.
 
 - Five configurable retrieval metrics with explicit cutoff, relevance, short-run,
   duplicate-document, and undefined-result policies, available through the metric registry.
+- Ordered parallel metric runner with case fingerprints, resumable JSONL cache, and error policy.
 
 ## [0.2.0] - 2026-08-31
 
