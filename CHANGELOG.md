@@ -4,6 +4,8 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add paired, direction-aware metadata slice comparisons and the
+  `compare-slices` regression-gate CLI.
 - Add deterministic nested-metadata slice summaries and the `slices` CLI.
 - Add OCR benchmark orchestration combining CER, WER, and normalized exact-match reports.
 - Expose the OCR workflow through the `metricguard ocr` command.

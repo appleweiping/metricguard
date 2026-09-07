@@ -30,7 +30,7 @@ from .reporting import (
     render_json,
     render_markdown,
 )
-from .slices import summarize_by_metadata
+from .slices import compare_by_metadata, summarize_by_metadata
 from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
 from .streaming import evaluate_stream
 from .suite import EvaluationSuite
@@ -175,6 +175,30 @@ def _parser() -> argparse.ArgumentParser:
     compare.add_argument("--format", choices=["json", "markdown"], default="markdown")
     compare.add_argument("--output", type=Path)
     compare.set_defaults(handler=_compare)
+    compare_slices = subcommands.add_parser(
+        "compare-slices", help="compare baseline and candidate by a metadata slice"
+    )
+    compare_slices.add_argument("baseline", type=Path)
+    compare_slices.add_argument("candidate", type=Path)
+    compare_slices_metric = compare_slices.add_mutually_exclusive_group(required=True)
+    compare_slices_metric.add_argument("--metric")
+    compare_slices_metric.add_argument("--metric-config", type=Path)
+    compare_slices.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.ERROR.value,
+    )
+    compare_slices.add_argument("--field", required=True)
+    compare_slices.add_argument("--missing", default="<missing>")
+    compare_slices.add_argument("--min-count", type=int, default=1)
+    compare_slices.add_argument("--samples", type=int, default=2_000)
+    compare_slices.add_argument("--confidence", type=float, default=0.95)
+    compare_slices.add_argument("--seed", type=int, default=0)
+    compare_slices.add_argument("--direction", choices=("higher", "lower"), default="higher")
+    compare_slices.add_argument("--minimum-delta", type=float, default=0.0)
+    compare_slices.add_argument("--minimum-lower-bound", type=float)
+    compare_slices.add_argument("--output", type=Path)
+    compare_slices.set_defaults(handler=_compare_slices)
     matrix = subcommands.add_parser("matrix", help="evaluate several metrics over one case suite")
     matrix.add_argument("cases", type=Path)
     matrix.add_argument("--metrics", required=True, help="comma-separated built-in metric names")
@@ -383,6 +407,43 @@ def _compare(args: argparse.Namespace) -> int:
     else:
         print(rendered, end="")
     return 0 if comparison.passed_gate else 2
+
+
+def _compare_slices(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.baseline, args.candidate, args.metric_config)
+    config = load_metric_config(args.metric_config) if args.metric_config else args.metric
+    metric = build_metric(config)
+    baseline = tuple(load_cases(args.baseline))
+    candidate = tuple(load_cases(args.candidate))
+    comparisons = compare_by_metadata(
+        baseline,
+        candidate,
+        metric=metric,
+        field=args.field,
+        undefined_policy=UndefinedPolicy(args.undefined),
+        bootstrap=BootstrapConfig(
+            samples=args.samples,
+            confidence=args.confidence,
+            seed=args.seed,
+        ),
+        missing=args.missing,
+        min_count=args.min_count,
+        minimum_delta=args.minimum_delta,
+        minimum_lower_bound=args.minimum_lower_bound,
+        direction=args.direction,
+    )
+    payload = {
+        "metric": metric.name,
+        "field": args.field,
+        "slices": [comparison.to_dict() for comparison in comparisons],
+        "passed": bool(comparisons) and all(comparison.passed for comparison in comparisons),
+    }
+    rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0 if payload["passed"] else 2
 
 
 def _matrix(args: argparse.Namespace) -> int:

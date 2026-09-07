@@ -35,7 +35,7 @@ from .ocr import (
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
-from .slices import SliceSummary, summarize_by_metadata
+from .slices import SliceComparison, SliceSummary, compare_by_metadata, summarize_by_metadata
 from .statistics import (
     BootstrapConfig,
     ConfidenceInterval,
@@ -81,6 +81,7 @@ __all__ = [
     "RunnerReport",
     "SentenceBleu",
     "Severity",
+    "SliceComparison",
     "SliceSummary",
     "StreamingReport",
     "StreamingTagSummary",
@@ -90,6 +91,7 @@ __all__ = [
     "UndefinedPolicy",
     "WordErrorRate",
     "build_metric",
+    "compare_by_metadata",
     "compare_case_sets",
     "confidence_interval",
     "evaluate_stream",

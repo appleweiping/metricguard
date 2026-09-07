@@ -359,6 +359,69 @@ def test_cli_compare_passes_and_fails_regression_gate(
     assert "Regression gate: **FAIL**" in capsys.readouterr().out
 
 
+def test_cli_compare_slices_emits_per_slice_gate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl",
+        '{"id":"a","reference":"yes","prediction":"no","metadata":{"group":"x"}}\n'
+        '{"id":"b","reference":"yes","prediction":"yes","metadata":{"group":"y"}}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes","metadata":{"group":"x"}}\n'
+        '{"id":"b","reference":"yes","prediction":"yes","metadata":{"group":"y"}}\n',
+    )
+    assert (
+        main(
+            [
+                "compare-slices",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--field",
+                "group",
+                "--samples",
+                "17",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["passed"] is True
+    assert [item["value"] for item in payload["slices"]] == ["x", "y"]
+    assert payload["slices"][0]["comparison"]["improvement"] == 1.0
+
+
+def test_cli_compare_slices_fails_when_metadata_moves(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes","metadata":{"group":"x"}}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes","metadata":{"group":"y"}}\n',
+    )
+    assert (
+        main(
+            [
+                "compare-slices",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--field",
+                "group",
+            ]
+        )
+        == 2
+    )
+    assert "changed metadata slice value" in capsys.readouterr().err
+
+
 def test_cli_compare_rejects_dataset_drift(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

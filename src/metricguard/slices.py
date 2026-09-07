@@ -6,9 +6,12 @@ import json
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from statistics import fmean
-from typing import Any
+from typing import Any, Literal
 
-from .models import EvaluationCase, SuiteReport
+from .metrics import Metric
+from .models import EvaluationCase, SuiteReport, UndefinedPolicy
+from .statistics import BootstrapConfig, PairedComparison, paired_comparison
+from .suite import EvaluationSuite
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +34,41 @@ class SliceSummary:
             "skipped_count": self.skipped_count,
             "mean_score": self.mean_score,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class SliceComparison:
+    """One metadata slice's paired baseline/candidate result."""
+
+    field: str
+    value: str
+    case_count: int
+    comparison: PairedComparison | None = None
+    error: str | None = None
+
+    @property
+    def passed(self) -> bool:
+        return self.error is None and self.comparison is not None and self.comparison.passed_gate
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "field": self.field,
+            "value": self.value,
+            "case_count": self.case_count,
+            "passed": self.passed,
+            "error": self.error,
+        }
+        if self.comparison is not None:
+            payload["comparison"] = {
+                "baseline_mean": self.comparison.baseline_mean,
+                "candidate_mean": self.comparison.candidate_mean,
+                "improvement": self.comparison.improvement.point,
+                "lower_bound": self.comparison.improvement.lower,
+                "upper_bound": self.comparison.improvement.upper,
+                "p_value": self.comparison.two_sided_p_value,
+                "passed_gate": self.comparison.passed_gate,
+            }
+        return payload
 
 
 def summarize_by_metadata(
@@ -81,6 +119,61 @@ def summarize_by_metadata(
             )
         )
     return tuple(sorted(summaries, key=lambda item: item.value))
+
+
+def compare_by_metadata(
+    baseline_cases: tuple[EvaluationCase, ...],
+    candidate_cases: tuple[EvaluationCase, ...],
+    *,
+    metric: Metric,
+    field: str,
+    undefined_policy: UndefinedPolicy,
+    bootstrap: BootstrapConfig | None = None,
+    missing: str = "<missing>",
+    min_count: int = 1,
+    minimum_delta: float = 0.0,
+    minimum_lower_bound: float | None = None,
+    direction: Literal["higher", "lower"] = "higher",
+) -> tuple[SliceComparison, ...]:
+    """Run paired statistical comparisons independently for metadata slices."""
+
+    if len({case.case_id for case in baseline_cases}) != len(baseline_cases):
+        raise ValueError("baseline cases contain duplicate IDs")
+    if len({case.case_id for case in candidate_cases}) != len(candidate_cases):
+        raise ValueError("candidate cases contain duplicate IDs")
+    baseline_by_id = {case.case_id: case for case in baseline_cases}
+    candidate_by_id = {case.case_id: case for case in candidate_cases}
+    if baseline_by_id.keys() != candidate_by_id.keys():
+        raise ValueError("baseline and candidate cases must contain the same case IDs")
+    groups: dict[str, list[str]] = {}
+    for case_id, baseline in baseline_by_id.items():
+        candidate = candidate_by_id[case_id]
+        baseline_value = _metadata_key(baseline.metadata, field.split("."), missing)
+        candidate_value = _metadata_key(candidate.metadata, field.split("."), missing)
+        if baseline_value != candidate_value:
+            raise ValueError(f"case {case_id!r} changed metadata slice value")
+        groups.setdefault(baseline_value, []).append(case_id)
+    results: list[SliceComparison] = []
+    for value, case_ids in sorted(groups.items()):
+        if len(case_ids) < min_count:
+            continue
+        left = tuple(baseline_by_id[case_id] for case_id in case_ids)
+        right = tuple(candidate_by_id[case_id] for case_id in case_ids)
+        try:
+            baseline_report = EvaluationSuite(left, undefined_policy=undefined_policy).run(metric)
+            candidate_report = EvaluationSuite(right, undefined_policy=undefined_policy).run(metric)
+            comparison = paired_comparison(
+                baseline_report,
+                candidate_report,
+                config=bootstrap,
+                minimum_delta=minimum_delta,
+                minimum_lower_bound=minimum_lower_bound,
+                direction=direction,
+            )
+            results.append(SliceComparison(field, value, len(case_ids), comparison))
+        except (TypeError, ValueError) as error:
+            results.append(SliceComparison(field, value, len(case_ids), error=str(error)))
+    return tuple(results)
 
 
 def _metadata_key(value: Mapping[str, Any], path: list[str], missing: str) -> str:
