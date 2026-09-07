@@ -13,6 +13,7 @@ from .document import (
 from .edit_metrics import CharacterErrorRate, WordErrorRate
 from .experiment import ExperimentMatrix, ExperimentResult, ExperimentSpec, LeaderboardEntry
 from .metrics import Metric, build_metric
+from .migration import migrate_report
 from .models import (
     AuditFinding,
     CaseResult,
@@ -107,6 +108,7 @@ __all__ = [
     "load_ocr_cases",
     "load_ocr_document_cases",
     "load_ocr_image_cases",
+    "migrate_report",
     "paired_comparison",
     "report_confidence_interval",
     "run_document_ocr_benchmark",

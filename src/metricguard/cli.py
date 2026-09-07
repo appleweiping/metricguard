@@ -15,6 +15,7 @@ from .document import load_ocr_document_cases, run_document_ocr_benchmark
 from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, iter_cases, load_cases, load_metric_config
 from .metrics import build_metric
+from .migration import migrate_report
 from .models import UndefinedPolicy
 from .ocr import (
     CommandOcrBackend,
@@ -51,6 +52,13 @@ def _parser() -> argparse.ArgumentParser:
         help="explicitly discover metricguard.metrics entry points",
     )
     list_parser.set_defaults(handler=_list_metrics)
+
+    migrate = subcommands.add_parser(
+        "migrate-report", help="migrate a legacy report JSON to schema version 1"
+    )
+    migrate.add_argument("input", type=Path)
+    migrate.add_argument("output", type=Path)
+    migrate.set_defaults(handler=_migrate_report)
 
     run = subcommands.add_parser("run", help="evaluate a JSON or JSONL case suite")
     run.add_argument("cases", type=Path)
@@ -565,6 +573,20 @@ def _ocr_document(args: argparse.Namespace) -> int:
         args.output.write_text(rendered, encoding="utf-8")
     else:
         print(rendered, end="")
+    return 0
+
+
+def _migrate_report(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.input)
+    try:
+        payload = json.loads(args.input.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"cannot load report {args.input}: {error}") from error
+    migrated = migrate_report(payload)
+    args.output.write_text(
+        json.dumps(migrated, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     return 0
 
 

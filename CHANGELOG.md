@@ -4,6 +4,9 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add `migrate-report` and a public report migration API for legacy JSON report
+  shapes with recomputed summaries.
+
 - Add deterministic Bonferroni, Holm, and Benjamini-Hochberg corrections for
   metadata-slice p-value families, exposed through `compare-slices`.
 

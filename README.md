@@ -288,7 +288,8 @@ is available in [`benchmarks/`](benchmarks/README.md). See
 - Streaming aggregation is available through `stream-run`.
 - Multiple-comparison corrections are available through `compare-slices`;
   future work includes correction-aware report families beyond metadata slices.
-- A versioned migration command when a report schema changes.
+- A versioned migration command is available as `migrate-report` when a report
+  schema changes.
 
 ## License
 
