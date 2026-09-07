@@ -30,6 +30,7 @@ from .reporting import (
     render_json,
     render_markdown,
 )
+from .slices import summarize_by_metadata
 from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
 from .streaming import evaluate_stream
 from .suite import EvaluationSuite
@@ -110,6 +111,23 @@ def _parser() -> argparse.ArgumentParser:
     confidence.add_argument("--seed", type=int, default=0)
     confidence.add_argument("--output", type=Path)
     confidence.set_defaults(handler=_confidence)
+    slices = subcommands.add_parser(
+        "slices", help="summarize metric scores by a nested case metadata field"
+    )
+    slices.add_argument("cases", type=Path)
+    slices_metric = slices.add_mutually_exclusive_group(required=True)
+    slices_metric.add_argument("--metric")
+    slices_metric.add_argument("--metric-config", type=Path)
+    slices.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.SKIP.value,
+    )
+    slices.add_argument("--field", required=True, help="dotted metadata path, e.g. cohort.language")
+    slices.add_argument("--missing", default="<missing>")
+    slices.add_argument("--min-count", type=int, default=1)
+    slices.add_argument("--output", type=Path)
+    slices.set_defaults(handler=_slices)
 
     compare = subcommands.add_parser(
         "compare", help="compare aligned baseline and candidate prediction files"
@@ -299,6 +317,34 @@ def _confidence(args: argparse.Namespace) -> int:
                 "mean_score": summary.mean_score,
             }
             for summary in summarize_by_tag(report, cases)
+        ],
+    }
+    rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _slices(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases, args.metric_config)
+    config = load_metric_config(args.metric_config) if args.metric_config else args.metric
+    metric = build_metric(config)
+    cases = tuple(load_cases(args.cases))
+    report = EvaluationSuite(cases, undefined_policy=UndefinedPolicy(args.undefined)).run(metric)
+    payload = {
+        "metric": report.metric_name,
+        "field": args.field,
+        "slices": [
+            summary.to_dict()
+            for summary in summarize_by_metadata(
+                report,
+                cases,
+                args.field,
+                missing=args.missing,
+                min_count=args.min_count,
+            )
         ],
     }
     rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"

@@ -35,6 +35,7 @@ from .ocr import (
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
+from .slices import SliceSummary, summarize_by_metadata
 from .statistics import (
     BootstrapConfig,
     ConfidenceInterval,
@@ -80,6 +81,7 @@ __all__ = [
     "RunnerReport",
     "SentenceBleu",
     "Severity",
+    "SliceSummary",
     "StreamingReport",
     "StreamingTagSummary",
     "SuiteReport",
@@ -99,6 +101,7 @@ __all__ = [
     "run_document_ocr_benchmark",
     "run_ocr_backend_benchmark",
     "run_ocr_benchmark",
+    "summarize_by_metadata",
     "summarize_by_tag",
 ]
 

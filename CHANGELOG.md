@@ -4,6 +4,7 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add deterministic nested-metadata slice summaries and the `slices` CLI.
 - Add OCR benchmark orchestration combining CER, WER, and normalized exact-match reports.
 - Expose the OCR workflow through the `metricguard ocr` command.
 - Add a shell-free, bounded external OCR command backend and image-case benchmark

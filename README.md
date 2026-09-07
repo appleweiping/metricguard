@@ -29,6 +29,9 @@ on them.
 - Loads third-party metric entry points only after an explicit opt-in.
 - Uses only the Python standard library at runtime.
 
+It also supports metadata slice reports for cohort-level regression analysis;
+see [metadata slices](docs/metadata-slices.md).
+
 MetricGuard is an evaluation reliability tool. It is not a leaderboard service, a
 model runner, or a claim that every metric should be symmetric.
 
