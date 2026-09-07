@@ -3,6 +3,7 @@
 from .advanced_metrics import LevenshteinSimilarity, RougeL, SentenceBleu
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .edit_metrics import CharacterErrorRate, WordErrorRate
 from .experiment import ExperimentMatrix, ExperimentResult, ExperimentSpec, LeaderboardEntry
 from .metrics import Metric, build_metric
 from .models import (
@@ -34,6 +35,7 @@ __all__ = [
     "AuditFinding",
     "BootstrapConfig",
     "CaseResult",
+    "CharacterErrorRate",
     "ConfidenceInterval",
     "Contract",
     "ContractAuditor",
@@ -59,6 +61,7 @@ __all__ = [
     "TagSummary",
     "TextNormalizer",
     "UndefinedPolicy",
+    "WordErrorRate",
     "build_metric",
     "compare_case_sets",
     "confidence_interval",

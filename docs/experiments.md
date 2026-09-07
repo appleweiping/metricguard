@@ -25,3 +25,9 @@ For review-ready ordering, call `ExperimentMatrix.leaderboard(results)`. It
 uses deterministic tie-aware ranks, puts unresolved cells last, and reports
 scored/total case counts plus whether the runner recorded errors. Set
 `higher_is_better=False` for loss metrics.
+
+OCR and long-context evaluations can use the built-in `character_error_rate`
+and `word_error_rate` metrics. They return normalized edit rates (lower is
+better), expose distance and denominator details, and mark non-empty outputs
+against empty references as undefined so a suite must choose an explicit
+undefined policy.

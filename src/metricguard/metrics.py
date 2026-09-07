@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from .edit_metrics import CharacterErrorRate, WordErrorRate
 from .models import MetricValue
 from .normalizers import TextNormalizer
 from .ranking import RANKING_METRICS, RankingMetric
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
 BUILTIN_METRIC_NAMES = (
     *RANKING_METRICS,
+    "character_error_rate",
     "character_f1",
     "exact_match",
     "levenshtein_similarity",
@@ -26,6 +28,7 @@ BUILTIN_METRIC_NAMES = (
     "rouge_l",
     "sentence_bleu",
     "token_f1",
+    "word_error_rate",
 )
 
 
@@ -273,6 +276,26 @@ def _build_builtin_metric(kind: str, options: dict[str, Any]) -> Metric:
         if unexpected:
             raise ValueError(f"unknown character_f1 options: {', '.join(sorted(unexpected))}")
         return CharacterF1(normalizer=normalizer)
+    if kind == "character_error_rate":
+        normalizer = (
+            _normalizer_from_config(options) if "normalizer" in options else TextNormalizer()
+        )
+        unexpected = set(options) - {"normalizer"}
+        if unexpected:
+            raise ValueError(
+                f"unknown character_error_rate options: {', '.join(sorted(unexpected))}"
+            )
+        return CharacterErrorRate(normalizer=normalizer)
+    if kind == "word_error_rate":
+        normalizer = (
+            _normalizer_from_config(options)
+            if "normalizer" in options
+            else TextNormalizer(lowercase=True, strip_punctuation=True)
+        )
+        unexpected = set(options) - {"normalizer"}
+        if unexpected:
+            raise ValueError(f"unknown word_error_rate options: {', '.join(sorted(unexpected))}")
+        return WordErrorRate(normalizer=normalizer)
     if kind == "numeric_equivalence":
         allowed = {"absolute_tolerance", "relative_tolerance", "allow_percent", "allow_commas"}
         unexpected = set(options) - allowed

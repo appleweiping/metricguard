@@ -11,6 +11,7 @@ All notable changes follow the principles of Keep a Changelog.
 - Ordered parallel metric runner with case fingerprints, resumable JSONL cache, and error policy.
 - Ordered metric experiment matrices with isolated resumable cell caches.
 - Deterministic experiment leaderboards with tie-aware ranks, score completeness, and cache/error visibility.
+- Character and word error-rate metrics with explicit empty-reference semantics for OCR evaluation.
 
 ## [0.2.0] - 2026-08-31
 
