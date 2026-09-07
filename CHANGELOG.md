@@ -6,6 +6,8 @@ All notable changes follow the principles of Keep a Changelog.
 
 - Add OCR benchmark orchestration combining CER, WER, and normalized exact-match reports.
 - Expose the OCR workflow through the `metricguard ocr` command.
+- Add a shell-free, bounded external OCR command backend and image-case benchmark
+  adapter for local tools and model-server wrappers.
 
 ### Added
 

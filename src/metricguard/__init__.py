@@ -16,7 +16,14 @@ from .models import (
     UndefinedPolicy,
 )
 from .normalizers import TextNormalizer
-from .ocr import OcrBenchmarkReport, load_ocr_cases, run_ocr_benchmark
+from .ocr import (
+    CommandOcrBackend,
+    OcrBenchmarkReport,
+    OcrImageCase,
+    load_ocr_cases,
+    run_ocr_backend_benchmark,
+    run_ocr_benchmark,
+)
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
@@ -37,6 +44,7 @@ __all__ = [
     "BootstrapConfig",
     "CaseResult",
     "CharacterErrorRate",
+    "CommandOcrBackend",
     "ConfidenceInterval",
     "Contract",
     "ContractAuditor",
@@ -53,6 +61,7 @@ __all__ = [
     "MetricRunner",
     "MetricValue",
     "OcrBenchmarkReport",
+    "OcrImageCase",
     "PairedComparison",
     "RankingMetric",
     "RougeL",
@@ -70,6 +79,7 @@ __all__ = [
     "load_ocr_cases",
     "paired_comparison",
     "report_confidence_interval",
+    "run_ocr_backend_benchmark",
     "run_ocr_benchmark",
     "summarize_by_tag",
 ]

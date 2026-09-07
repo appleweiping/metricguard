@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from metricguard import load_ocr_cases, run_ocr_benchmark
+import sys
+
+import pytest
+
+from metricguard import (
+    CommandOcrBackend,
+    OcrImageCase,
+    load_ocr_cases,
+    run_ocr_backend_benchmark,
+    run_ocr_benchmark,
+)
 
 
 def test_ocr_benchmark_reports_cer_wer_and_exact_match(tmp_path) -> None:
@@ -25,3 +35,18 @@ def test_ocr_benchmark_rejects_empty_case_collection() -> None:
         assert "at least one" in str(error)
     else:  # pragma: no cover
         raise AssertionError("empty OCR benchmark was accepted")
+
+
+def test_command_backend_is_shell_free_and_feeds_ocr_benchmark(tmp_path) -> None:
+    image = tmp_path / "scan.bin"
+    image.write_bytes(b"placeholder")
+    backend = CommandOcrBackend(
+        [sys.executable, "-c", "print('hello world')", "{image}"], max_output_bytes=128
+    )
+    assert backend(image) == "hello world"
+    report = run_ocr_backend_benchmark((OcrImageCase("one", image, "hello world"),), backend)
+    assert report.exact_match_rate == 1.0
+    with pytest.raises(ValueError, match="placeholder"):
+        CommandOcrBackend([sys.executable, "-c", "print('x')"])
+    with pytest.raises(ValueError, match="does not exist"):
+        backend(tmp_path / "missing.bin")
