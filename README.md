@@ -285,8 +285,9 @@ is available in [`benchmarks/`](benchmarks/README.md). See
 
 ## Roadmap
 
-- Streaming aggregation for evaluation suites that exceed memory.
-- Multiple-comparison corrections for large metric families.
+- Streaming aggregation is available through `stream-run`.
+- Multiple-comparison corrections are available through `compare-slices`;
+  future work includes correction-aware report families beyond metadata slices.
 - A versioned migration command when a report schema changes.
 
 ## License
