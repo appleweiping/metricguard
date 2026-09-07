@@ -4,6 +4,8 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add OCR benchmark orchestration combining CER, WER, and normalized exact-match reports.
+
 ### Added
 
 - Five configurable retrieval metrics with explicit cutoff, relevance, short-run,

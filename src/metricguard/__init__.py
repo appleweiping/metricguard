@@ -16,6 +16,7 @@ from .models import (
     UndefinedPolicy,
 )
 from .normalizers import TextNormalizer
+from .ocr import OcrBenchmarkReport, load_ocr_cases, run_ocr_benchmark
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
@@ -51,6 +52,7 @@ __all__ = [
     "MetricRegistry",
     "MetricRunner",
     "MetricValue",
+    "OcrBenchmarkReport",
     "PairedComparison",
     "RankingMetric",
     "RougeL",
@@ -65,8 +67,10 @@ __all__ = [
     "build_metric",
     "compare_case_sets",
     "confidence_interval",
+    "load_ocr_cases",
     "paired_comparison",
     "report_confidence_interval",
+    "run_ocr_benchmark",
     "summarize_by_tag",
 ]
 
