@@ -8,6 +8,7 @@ from metricguard import (
     CommandOcrBackend,
     OcrImageCase,
     load_ocr_cases,
+    load_ocr_image_cases,
     run_ocr_backend_benchmark,
     run_ocr_benchmark,
 )
@@ -50,3 +51,24 @@ def test_command_backend_is_shell_free_and_feeds_ocr_benchmark(tmp_path) -> None
         CommandOcrBackend([sys.executable, "-c", "print('x')"])
     with pytest.raises(ValueError, match="does not exist"):
         backend(tmp_path / "missing.bin")
+
+
+def test_load_ocr_image_cases_resolves_relative_paths_and_rejects_duplicates(tmp_path) -> None:
+    image = tmp_path / "page.txt"
+    image.write_text("hello world", encoding="utf-8")
+    cases = tmp_path / "images.jsonl"
+    cases.write_text(
+        '{"id":"one","image":"page.txt","reference":"hello world"}\n', encoding="utf-8"
+    )
+    loaded = load_ocr_image_cases(cases)
+    assert loaded[0].image == image
+    assert loaded[0].reference == "hello world"
+
+    duplicate = tmp_path / "duplicate.json"
+    duplicate.write_text(
+        '[{"id":"one","image":"page.txt","reference":"a"},'
+        '{"id":"one","image":"page.txt","reference":"b"}]',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="duplicates id"):
+        load_ocr_image_cases(duplicate)

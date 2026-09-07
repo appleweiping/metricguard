@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess  # nosec B404 - the backend is an explicit, shell-free argv adapter
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -9,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .edit_metrics import CharacterErrorRate, WordErrorRate
-from .io import load_cases
+from .io import CaseFormatError, _read_jsonl, _strict_json_loads, load_cases
 from .metrics import ExactMatch
 from .models import EvaluationCase, SuiteReport, UndefinedPolicy
 from .suite import EvaluationSuite
@@ -183,3 +184,67 @@ def load_ocr_cases(path: str | Path) -> tuple[EvaluationCase, ...]:
     if not cases:
         raise ValueError(f"OCR case file {path} contains no cases")
     return cases
+
+
+def load_ocr_image_cases(path: str | Path) -> tuple[OcrImageCase, ...]:
+    """Load image/reference records for a command or model OCR backend.
+
+    The file may be a JSON array or JSONL. Relative image paths are resolved
+    against the case file directory and are intentionally not required to
+    exist until a backend is run, allowing manifests to be prepared before a
+    dataset mount is available.
+    """
+
+    source = Path(path)
+    if not source.is_file():
+        raise CaseFormatError(f"OCR image case file does not exist: {source}")
+    try:
+        if source.suffix.lower() == ".jsonl":
+            raw_cases = list(_read_jsonl(source))
+        else:
+            loaded = _strict_json_loads(source.read_text(encoding="utf-8"))
+            if not isinstance(loaded, list):
+                raise CaseFormatError("OCR image JSON files must contain an array")
+            raw_cases = loaded
+    except json.JSONDecodeError as error:
+        raise CaseFormatError(
+            f"invalid JSON in {source} at line {error.lineno}, column {error.colno}"
+        ) from error
+    except (OSError, UnicodeError) as error:
+        raise CaseFormatError(f"cannot read OCR image case file {source}: {error}") from error
+
+    cases: list[OcrImageCase] = []
+    seen: set[str] = set()
+    for position, raw in enumerate(raw_cases, start=1):
+        if not isinstance(raw, dict):
+            raise CaseFormatError(f"OCR image case {position} must be an object")
+        required = {"id", "image", "reference"}
+        missing = required - raw.keys()
+        unexpected = set(raw) - required
+        if missing:
+            raise CaseFormatError(
+                f"OCR image case {position} is missing: {', '.join(sorted(missing))}"
+            )
+        if unexpected:
+            raise CaseFormatError(
+                f"OCR image case {position} has unknown fields: {', '.join(sorted(unexpected))}"
+            )
+        case_id = raw["id"]
+        image_name = raw["image"]
+        reference = raw["reference"]
+        if not isinstance(case_id, str) or not case_id.strip():
+            raise CaseFormatError(f"OCR image case {position} id must be a non-empty string")
+        if case_id in seen:
+            raise CaseFormatError(f"OCR image case {position} duplicates id {case_id!r}")
+        if not isinstance(image_name, str) or not image_name.strip():
+            raise CaseFormatError(f"OCR image case {position} image must be a non-empty string")
+        if not isinstance(reference, str):
+            raise CaseFormatError(f"OCR image case {position} reference must be a string")
+        image = Path(image_name)
+        if not image.is_absolute():
+            image = source.parent / image
+        cases.append(OcrImageCase(case_id, image, reference))
+        seen.add(case_id)
+    if not cases:
+        raise CaseFormatError(f"OCR image case file {source} contains no cases")
+    return tuple(cases)

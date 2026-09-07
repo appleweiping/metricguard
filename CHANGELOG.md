@@ -8,6 +8,8 @@ All notable changes follow the principles of Keep a Changelog.
 - Expose the OCR workflow through the `metricguard ocr` command.
 - Add a shell-free, bounded external OCR command backend and image-case benchmark
   adapter for local tools and model-server wrappers.
+- Add strict JSON/JSONL image-case loading and an `ocr-backend` CLI that runs
+  the external adapter with explicit timeout/output limits.
 
 ### Added
 

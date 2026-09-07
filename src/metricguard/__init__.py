@@ -21,6 +21,7 @@ from .ocr import (
     OcrBenchmarkReport,
     OcrImageCase,
     load_ocr_cases,
+    load_ocr_image_cases,
     run_ocr_backend_benchmark,
     run_ocr_benchmark,
 )
@@ -77,6 +78,7 @@ __all__ = [
     "compare_case_sets",
     "confidence_interval",
     "load_ocr_cases",
+    "load_ocr_image_cases",
     "paired_comparison",
     "report_confidence_interval",
     "run_ocr_backend_benchmark",

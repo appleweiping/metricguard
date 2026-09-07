@@ -28,3 +28,27 @@ adapter without adding an SDK dependency. Supply an argv template containing
 limit, and reports non-zero exits explicitly. `run_ocr_backend_benchmark()`
 connects that backend to `OcrImageCase` objects and the same CER/WER/exact-match
 report, so backend changes remain comparable under one metric contract.
+
+Image cases can be loaded from JSON or JSONL with `id`, `image`, and `reference`
+fields. Relative image paths are resolved against the case file:
+
+```json
+{"id":"scan-1","image":"pages/scan-1.png","reference":"hello world"}
+```
+
+The complete backend workflow is also available from the CLI. The command is an
+argv template, not a shell string, and must contain `{image}`:
+
+```bash
+metricguard ocr-backend image-cases.jsonl \
+  --command tesseract --command {image} --command stdout \
+  --output backend-report.json
+```
+
+Repeat `--command` once per argv token so options such as `-c` remain data
+rather than being interpreted by MetricGuard's own parser; use the
+`--command=-c` spelling for a token that starts with a dash.
+
+Use `--timeout`, `--max-output-bytes`, and `--undefined` to make resource and
+empty-reference behavior explicit. A backend failure is reported as a clean
+non-zero CLI result rather than being hidden as a metric score.

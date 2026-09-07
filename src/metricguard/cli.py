@@ -15,7 +15,13 @@ from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, load_cases, load_metric_config
 from .metrics import build_metric
 from .models import UndefinedPolicy
-from .ocr import load_ocr_cases, run_ocr_benchmark
+from .ocr import (
+    CommandOcrBackend,
+    load_ocr_cases,
+    load_ocr_image_cases,
+    run_ocr_backend_benchmark,
+    run_ocr_benchmark,
+)
 from .registry import MetricRegistry
 from .reporting import (
     render_comparison_json,
@@ -134,6 +140,26 @@ def _parser() -> argparse.ArgumentParser:
     )
     ocr.add_argument("--output", type=Path)
     ocr.set_defaults(handler=_ocr)
+    ocr_backend = subcommands.add_parser(
+        "ocr-backend", help="run an explicit shell-free OCR command over image/reference cases"
+    )
+    ocr_backend.add_argument("cases", type=Path)
+    ocr_backend.add_argument(
+        "--command",
+        action="append",
+        required=True,
+        metavar="ARG",
+        help="one argv token; repeat for the complete template containing exactly one {image}",
+    )
+    ocr_backend.add_argument("--timeout", type=float, default=120.0)
+    ocr_backend.add_argument("--max-output-bytes", type=int, default=4 * 1024 * 1024)
+    ocr_backend.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.SKIP.value,
+    )
+    ocr_backend.add_argument("--output", type=Path)
+    ocr_backend.set_defaults(handler=_ocr_backend)
     return parser
 
 
@@ -241,6 +267,24 @@ def _ocr(args: argparse.Namespace) -> int:
     _ensure_output_is_distinct(args.output, args.cases)
     report = run_ocr_benchmark(
         load_ocr_cases(args.cases), undefined_policy=UndefinedPolicy(args.undefined)
+    )
+    rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _ocr_backend(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    backend = CommandOcrBackend(
+        args.command,
+        timeout=args.timeout,
+        max_output_bytes=args.max_output_bytes,
+    )
+    report = run_ocr_backend_benchmark(
+        load_ocr_image_cases(args.cases), backend, undefined_policy=UndefinedPolicy(args.undefined)
     )
     rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
     if args.output:
