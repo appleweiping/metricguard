@@ -12,6 +12,12 @@ report = run_ocr_benchmark(load_ocr_cases("ocr-cases.jsonl"))
 print(report.to_dict())
 ```
 
+The same workflow is available from the CLI:
+
+```bash
+metricguard ocr ocr-cases.jsonl --output ocr-report.json
+```
+
 The module evaluates text pairs; it intentionally does not pretend to be an
 OCR image model or provider. An OCR backend can feed its recognized strings into
 the same case format while MetricGuard preserves auditable metric semantics.

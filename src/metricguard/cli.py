@@ -15,6 +15,7 @@ from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, load_cases, load_metric_config
 from .metrics import build_metric
 from .models import UndefinedPolicy
+from .ocr import load_ocr_cases, run_ocr_benchmark
 from .registry import MetricRegistry
 from .reporting import (
     render_comparison_json,
@@ -124,6 +125,15 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--cache-dir", type=Path)
     matrix.add_argument("--output", type=Path)
     matrix.set_defaults(handler=_matrix)
+    ocr = subcommands.add_parser("ocr", help="evaluate OCR reference/prediction text pairs")
+    ocr.add_argument("cases", type=Path)
+    ocr.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.SKIP.value,
+    )
+    ocr.add_argument("--output", type=Path)
+    ocr.set_defaults(handler=_ocr)
     return parser
 
 
@@ -220,6 +230,19 @@ def _matrix(args: argparse.Namespace) -> int:
         )
         + "\n"
     )
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _ocr(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    report = run_ocr_benchmark(
+        load_ocr_cases(args.cases), undefined_policy=UndefinedPolicy(args.undefined)
+    )
+    rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
     else:
