@@ -222,6 +222,36 @@ def test_cli_run_markdown_and_json_output(
     assert json.loads(output.read_text(encoding="utf-8"))["summary"]["case_count"] == 1
 
 
+def test_cli_confidence_reports_interval_and_tags(tmp_path: Path) -> None:
+    cases = write(
+        tmp_path / "cases.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes","tags":["easy"]}\n'
+        '{"id":"b","reference":"yes","prediction":"no","tags":["hard"]}\n',
+    )
+    output = tmp_path / "confidence.json"
+    assert (
+        main(
+            [
+                "confidence",
+                str(cases),
+                "--metric",
+                "exact_match",
+                "--samples",
+                "17",
+                "--seed",
+                "4",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["scored"] == 2
+    assert payload["confidence_interval"]["samples"] == 17
+    assert [item["tag"] for item in payload["by_tag"]] == ["easy", "hard"]
+
+
 def test_cli_expected_error(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["run", str(tmp_path / "missing.json"), "--metric", "exact_match"]) == 2
     assert "metricguard: error:" in capsys.readouterr().err

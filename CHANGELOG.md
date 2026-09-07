@@ -10,6 +10,8 @@ All notable changes follow the principles of Keep a Changelog.
   adapter for local tools and model-server wrappers.
 - Add strict JSON/JSONL image-case loading and an `ocr-backend` CLI that runs
   the external adapter with explicit timeout/output limits.
+- Add a `metricguard confidence` CLI for deterministic bootstrap intervals and
+  per-tag summaries.
 
 ### Added
 

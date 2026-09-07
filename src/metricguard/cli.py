@@ -29,7 +29,7 @@ from .reporting import (
     render_json,
     render_markdown,
 )
-from .statistics import BootstrapConfig
+from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
 from .suite import EvaluationSuite
 
 
@@ -71,6 +71,23 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--format", choices=["json", "markdown"], default="markdown")
     run.add_argument("--output", type=Path)
     run.set_defaults(handler=_run)
+    confidence = subcommands.add_parser(
+        "confidence", help="report deterministic bootstrap uncertainty for one metric suite"
+    )
+    confidence.add_argument("cases", type=Path)
+    confidence_metric = confidence.add_mutually_exclusive_group(required=True)
+    confidence_metric.add_argument("--metric")
+    confidence_metric.add_argument("--metric-config", type=Path)
+    confidence.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.ERROR.value,
+    )
+    confidence.add_argument("--samples", type=int, default=2_000)
+    confidence.add_argument("--confidence", type=float, default=0.95)
+    confidence.add_argument("--seed", type=int, default=0)
+    confidence.add_argument("--output", type=Path)
+    confidence.set_defaults(handler=_confidence)
 
     compare = subcommands.add_parser(
         "compare", help="compare aligned baseline and candidate prediction files"
@@ -190,6 +207,46 @@ def _run(args: argparse.Namespace) -> int:
     else:
         print(rendered, end="")
     return 0 if report.passed_contracts else 2
+
+
+def _confidence(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases, args.metric_config)
+    config = load_metric_config(args.metric_config) if args.metric_config else args.metric
+    metric = build_metric(config)
+    cases = tuple(load_cases(args.cases))
+    report = EvaluationSuite(cases, undefined_policy=UndefinedPolicy(args.undefined)).run(metric)
+    interval = report_confidence_interval(
+        report,
+        BootstrapConfig(samples=args.samples, confidence=args.confidence, seed=args.seed),
+    )
+    payload = {
+        "metric": report.metric_name,
+        "cases": len(cases),
+        "scored": report.scored_count,
+        "mean_score": report.mean_score,
+        "confidence_interval": {
+            "point": interval.point,
+            "lower": interval.lower,
+            "upper": interval.upper,
+            "confidence": interval.confidence,
+            "samples": interval.samples,
+        },
+        "by_tag": [
+            {
+                "tag": summary.tag,
+                "case_count": summary.case_count,
+                "scored_count": summary.scored_count,
+                "mean_score": summary.mean_score,
+            }
+            for summary in summarize_by_tag(report, cases)
+        ],
+    }
+    rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
 
 
 def _compare(args: argparse.Namespace) -> int:
