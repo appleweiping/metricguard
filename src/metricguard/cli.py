@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 from . import __version__
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, load_cases, load_metric_config
 from .metrics import build_metric
 from .models import UndefinedPolicy
@@ -109,6 +111,19 @@ def _parser() -> argparse.ArgumentParser:
     compare.add_argument("--format", choices=["json", "markdown"], default="markdown")
     compare.add_argument("--output", type=Path)
     compare.set_defaults(handler=_compare)
+    matrix = subcommands.add_parser("matrix", help="evaluate several metrics over one case suite")
+    matrix.add_argument("cases", type=Path)
+    matrix.add_argument("--metrics", required=True, help="comma-separated built-in metric names")
+    matrix.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.ERROR.value,
+    )
+    matrix.add_argument("--workers", type=int, default=1, help="workers per metric")
+    matrix.add_argument("--max-workers", type=int, default=1, help="parallel metric cells")
+    matrix.add_argument("--cache-dir", type=Path)
+    matrix.add_argument("--output", type=Path)
+    matrix.set_defaults(handler=_matrix)
     return parser
 
 
@@ -169,6 +184,47 @@ def _compare(args: argparse.Namespace) -> int:
     else:
         print(rendered, end="")
     return 0 if comparison.passed_gate else 2
+
+
+def _matrix(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    names = tuple(name.strip() for name in args.metrics.split(",") if name.strip())
+    if not names or len(names) != len(set(names)):
+        raise ValueError("--metrics must contain unique comma-separated names")
+    cases = tuple(load_cases(args.cases))
+    policy = UndefinedPolicy(args.undefined)
+    specs = tuple(
+        ExperimentSpec(
+            name, build_metric(name), cases, undefined_policy=policy, workers=args.workers
+        )
+        for name in names
+    )
+    results = ExperimentMatrix(specs).run(cache_dir=args.cache_dir, max_workers=args.max_workers)
+    rendered = (
+        json.dumps(
+            {
+                "experiments": [
+                    {
+                        "name": result.name,
+                        "metric": result.metric_name,
+                        "cases": result.cases,
+                        "mean_score": result.mean_score,
+                        "cached": result.report.cached,
+                        "errors": [list(error) for error in result.report.errors],
+                    }
+                    for result in results
+                ]
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
 
 
 def _ensure_output_is_distinct(output: Path | None, *inputs: Path | None) -> None:

@@ -156,6 +156,32 @@ def test_cli_list(capsys: pytest.CaptureFixture[str]) -> None:
     assert "token_f1" in capsys.readouterr().out
 
 
+def test_cli_matrix_with_cache(tmp_path: Path) -> None:
+    cases = write(
+        tmp_path / "cases.jsonl",
+        '{"id":"a","reference":"hello","prediction":"hello"}\n'
+        '{"id":"b","reference":"hello","prediction":"bye"}\n',
+    )
+    output = tmp_path / "matrix.json"
+    assert (
+        main(
+            [
+                "matrix",
+                str(cases),
+                "--metrics",
+                "exact_match,token_f1",
+                "--cache-dir",
+                str(tmp_path / "cache"),
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert [item["name"] for item in payload["experiments"]] == ["exact_match", "token_f1"]
+
+
 def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(["--version"])
