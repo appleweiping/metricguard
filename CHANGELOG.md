@@ -10,6 +10,7 @@ All notable changes follow the principles of Keep a Changelog.
   duplicate-document, and undefined-result policies, available through the metric registry.
 - Ordered parallel metric runner with case fingerprints, resumable JSONL cache, and error policy.
 - Ordered metric experiment matrices with isolated resumable cell caches.
+- Deterministic experiment leaderboards with tie-aware ranks, score completeness, and cache/error visibility.
 
 ## [0.2.0] - 2026-08-31
 

@@ -56,6 +56,19 @@ class ExperimentResult:
         return self.report.mean_score
 
 
+@dataclass(frozen=True, slots=True)
+class LeaderboardEntry:
+    """One deterministic rank in a completed experiment matrix."""
+
+    rank: int
+    name: str
+    metric_name: str
+    mean_score: float | None
+    scored_cases: int
+    total_cases: int
+    contract_passed: bool
+
+
 class ExperimentMatrix:
     """Run named metric experiments in parallel while preserving input order."""
 
@@ -101,3 +114,52 @@ class ExperimentMatrix:
     def means(results: Iterable[ExperimentResult]) -> Mapping[str, float | None]:
         """Return stable name-to-mean scores for reporting."""
         return MappingProxyType({result.name: result.mean_score for result in results})
+
+    @staticmethod
+    def leaderboard(
+        results: Iterable[ExperimentResult], *, higher_is_better: bool = True
+    ) -> tuple[LeaderboardEntry, ...]:
+        """Rank matrix cells with missing scores and contract failures visible.
+
+        ``None`` means that no case received a resolved score and is always
+        placed after scored experiments. Ties use the experiment name as a
+        stable secondary key; rank is competition rank (1, 1, 3).
+        """
+
+        values = tuple(results)
+        if not values:
+            return ()
+        if any(not isinstance(item, ExperimentResult) for item in values):
+            raise TypeError("leaderboard requires ExperimentResult values")
+        if not isinstance(higher_is_better, bool):
+            raise TypeError("higher_is_better must be a boolean")
+        if len({item.name for item in values}) != len(values):
+            raise ValueError("leaderboard experiment names must be unique")
+
+        def key(item: ExperimentResult) -> tuple[int, float, str]:
+            score = item.mean_score
+            if score is None:
+                return (1, 0.0, item.name)
+            return (0, (-score if higher_is_better else score), item.name)
+
+        ordered = sorted(values, key=key)
+        output: list[LeaderboardEntry] = []
+        previous: float | None = object()  # type: ignore[assignment]
+        previous_rank = 0
+        for position, item in enumerate(ordered, start=1):
+            score = item.mean_score
+            if score != previous:
+                previous_rank = position
+                previous = score
+            output.append(
+                LeaderboardEntry(
+                    previous_rank,
+                    item.name,
+                    item.metric_name,
+                    score,
+                    sum(result.resolved_score is not None for result in item.report.results),
+                    item.cases,
+                    not item.report.errors,
+                )
+            )
+        return tuple(output)

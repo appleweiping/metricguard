@@ -3,7 +3,7 @@
 from .advanced_metrics import LevenshteinSimilarity, RougeL, SentenceBleu
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
-from .experiment import ExperimentMatrix, ExperimentResult, ExperimentSpec
+from .experiment import ExperimentMatrix, ExperimentResult, ExperimentSpec, LeaderboardEntry
 from .metrics import Metric, build_metric
 from .models import (
     AuditFinding,
@@ -42,6 +42,7 @@ __all__ = [
     "ExperimentMatrix",
     "ExperimentResult",
     "ExperimentSpec",
+    "LeaderboardEntry",
     "LevenshteinSimilarity",
     "Metric",
     "MetricPluginError",

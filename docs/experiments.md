@@ -20,3 +20,8 @@ print(ExperimentMatrix.means(results))
 The matrix coordinates evaluation; it does not make custom metrics thread-safe.
 Use the metric's documented concurrency contract and keep cache directories
 private to one experiment configuration.
+
+For review-ready ordering, call `ExperimentMatrix.leaderboard(results)`. It
+uses deterministic tie-aware ranks, puts unresolved cells last, and reports
+scored/total case counts plus whether the runner recorded errors. Set
+`higher_is_better=False` for loss metrics.
