@@ -7,6 +7,7 @@ from metricguard import (
     SliceSummary,
     UndefinedPolicy,
     compare_by_metadata,
+    correct_slice_p_values,
     summarize_by_metadata,
 )
 from metricguard.edit_metrics import CharacterErrorRate
@@ -146,3 +147,32 @@ def test_metadata_slice_comparison_validates_slice_arguments() -> None:
                 min_count=min_count,
                 undefined_policy=UndefinedPolicy.ERROR,
             )
+
+
+def test_metadata_slice_comparison_applies_family_correction_without_changing_gate() -> None:
+    baseline = tuple(
+        EvaluationCase(f"c{index}", "yes", "no", metadata={"group": group})
+        for index, group in enumerate(("a", "a", "b", "b"))
+    )
+    candidate = tuple(
+        EvaluationCase(f"c{index}", "yes", "yes", metadata={"group": group})
+        for index, group in enumerate(("a", "a", "b", "b"))
+    )
+    comparisons = compare_by_metadata(
+        baseline,
+        candidate,
+        metric=CharacterErrorRate(),
+        field="group",
+        undefined_policy=UndefinedPolicy.ERROR,
+        bootstrap=BootstrapConfig(samples=16, seed=3),
+    )
+    corrected = correct_slice_p_values(comparisons, method="bonferroni", alpha=1.0)
+    assert len(corrected) == 2
+    assert all(item.adjusted_p_value is not None for item in corrected)
+    assert all(item.significance_passed is True for item in corrected)
+    assert [item.passed for item in corrected] == [item.passed for item in comparisons]
+
+
+def test_metadata_slice_correction_validates_alpha() -> None:
+    with pytest.raises(ValueError, match="alpha"):
+        correct_slice_p_values((), method="holm", alpha=0)

@@ -4,6 +4,9 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add deterministic Bonferroni, Holm, and Benjamini-Hochberg corrections for
+  metadata-slice p-value families, exposed through `compare-slices`.
+
 - Add paired, direction-aware metadata slice comparisons and the
   `compare-slices` regression-gate CLI.
 - Add deterministic nested-metadata slice summaries and the `slices` CLI.

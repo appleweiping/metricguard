@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from statistics import fmean
 from typing import Any, Literal
 
 from .metrics import Metric
 from .models import EvaluationCase, SuiteReport, UndefinedPolicy
-from .statistics import BootstrapConfig, PairedComparison, paired_comparison
+from .statistics import (
+    BootstrapConfig,
+    CorrectionMethod,
+    PairedComparison,
+    adjust_p_values,
+    paired_comparison,
+)
 from .suite import EvaluationSuite
 
 
@@ -45,6 +51,8 @@ class SliceComparison:
     case_count: int
     comparison: PairedComparison | None = None
     error: str | None = None
+    adjusted_p_value: float | None = None
+    significance_passed: bool | None = None
 
     @property
     def passed(self) -> bool:
@@ -68,7 +76,46 @@ class SliceComparison:
                 "p_value": self.comparison.two_sided_p_value,
                 "passed_gate": self.comparison.passed_gate,
             }
+        if self.adjusted_p_value is not None:
+            payload["adjusted_p_value"] = self.adjusted_p_value
+            payload["significance_passed"] = self.significance_passed
         return payload
+
+
+def correct_slice_p_values(
+    comparisons: Iterable[SliceComparison],
+    *,
+    method: CorrectionMethod,
+    alpha: float = 0.05,
+) -> tuple[SliceComparison, ...]:
+    """Apply one family-level p-value correction to successful slices.
+
+    Ordering and error entries are preserved. Significance is reported
+    separately from the existing confidence/delta gate, so callers can choose
+    whether a family-level claim should block a release.
+    """
+
+    if isinstance(alpha, bool) or not isinstance(alpha, (int, float)):
+        raise TypeError("alpha must be a real number")
+    if not 0 < alpha <= 1:
+        raise ValueError("alpha must be between zero and one")
+    rows = tuple(comparisons)
+    active = tuple(row for row in rows if row.comparison is not None and row.error is None)
+    adjusted = adjust_p_values(
+        (row.comparison.two_sided_p_value for row in active if row.comparison is not None),
+        method,
+    )
+    by_identity = {id(row): value for row, value in zip(active, adjusted, strict=True)}
+    return tuple(
+        replace(
+            row,
+            adjusted_p_value=by_identity[id(row)],
+            significance_passed=by_identity[id(row)] <= alpha,
+        )
+        if id(row) in by_identity
+        else row
+        for row in rows
+    )
 
 
 def summarize_by_metadata(

@@ -191,6 +191,10 @@ Skipped cases must be skipped on both sides. A one-sided skip is an error becaus
 it silently changes the evaluated population. Tag summaries are available through
 `summarize_by_tag`. See [statistical comparison](docs/statistical-comparison.md).
 
+For a family of metadata slices, use the explicit
+[multiple-comparison correction](docs/multiple-comparison.md) option on
+`compare-slices`.
+
 ## Metric plugins
 
 Plugins register a factory under the `metricguard.metrics` entry-point group.

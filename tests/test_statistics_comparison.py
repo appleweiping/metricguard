@@ -5,6 +5,7 @@ from metricguard.metrics import ExactMatch
 from metricguard.models import CaseResult, EvaluationCase, MetricValue, SuiteReport
 from metricguard.statistics import (
     BootstrapConfig,
+    adjust_p_values,
     confidence_interval,
     paired_comparison,
     report_confidence_interval,
@@ -36,6 +37,28 @@ def test_confidence_interval_is_deterministic_and_degenerate() -> None:
     assert first.lower <= first.point <= first.upper
     constant = confidence_interval((0.25, 0.25), config)
     assert (constant.lower, constant.point, constant.upper) == (0.25, 0.25, 0.25)
+
+
+def test_p_value_corrections_preserve_order_and_are_deterministic() -> None:
+    values = (0.01, 0.04, 0.2, 0.001)
+    assert adjust_p_values(values) == values
+    assert adjust_p_values(values, "bonferroni") == pytest.approx((0.04, 0.16, 0.8, 0.004))
+    assert adjust_p_values(values, "holm") == pytest.approx((0.03, 0.08, 0.2, 0.004))
+    assert adjust_p_values(values, "benjamini-hochberg") == pytest.approx(
+        (0.02, 0.0533333333, 0.2, 0.004)
+    )
+    assert adjust_p_values(values, "holm") == adjust_p_values(values, "holm")
+
+
+@pytest.mark.parametrize("values", [(-0.1,), (1.1,), (float("nan"),), (True,)])
+def test_p_value_corrections_reject_invalid_probabilities(values: tuple[object, ...]) -> None:
+    with pytest.raises((TypeError, ValueError)):
+        adjust_p_values(values)  # type: ignore[arg-type]
+
+
+def test_p_value_corrections_reject_unknown_method() -> None:
+    with pytest.raises(ValueError, match="unsupported"):
+        adjust_p_values((0.1,), "unknown")  # type: ignore[arg-type]
 
 
 def test_report_confidence_interval_ignores_explicitly_skipped_results() -> None:

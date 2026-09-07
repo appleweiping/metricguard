@@ -35,12 +35,19 @@ from .ocr import (
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
-from .slices import SliceComparison, SliceSummary, compare_by_metadata, summarize_by_metadata
+from .slices import (
+    SliceComparison,
+    SliceSummary,
+    compare_by_metadata,
+    correct_slice_p_values,
+    summarize_by_metadata,
+)
 from .statistics import (
     BootstrapConfig,
     ConfidenceInterval,
     PairedComparison,
     TagSummary,
+    adjust_p_values,
     confidence_interval,
     paired_comparison,
     report_confidence_interval,
@@ -90,10 +97,12 @@ __all__ = [
     "TextNormalizer",
     "UndefinedPolicy",
     "WordErrorRate",
+    "adjust_p_values",
     "build_metric",
     "compare_by_metadata",
     "compare_case_sets",
     "confidence_interval",
+    "correct_slice_p_values",
     "evaluate_stream",
     "load_ocr_cases",
     "load_ocr_document_cases",

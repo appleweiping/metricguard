@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
 from statistics import fmean
 from typing import Literal
@@ -100,6 +101,52 @@ class TagSummary:
     case_count: int
     scored_count: int
     mean_score: float | None
+
+
+CorrectionMethod = Literal["none", "bonferroni", "holm", "benjamini-hochberg"]
+
+
+def adjust_p_values(
+    p_values: Iterable[float], method: CorrectionMethod = "none"
+) -> tuple[float, ...]:
+    """Adjust a family of p-values deterministically.
+
+    ``bonferroni`` controls family-wise error directly, ``holm`` is the
+    step-down family-wise procedure, and ``benjamini-hochberg`` controls the
+    false-discovery rate. Input order is preserved and all values must be
+    finite probabilities. The implementation is dependency-free so reports
+    remain reproducible in minimal CI environments.
+    """
+
+    if method not in {"none", "bonferroni", "holm", "benjamini-hochberg"}:
+        raise ValueError(f"unsupported p-value correction {method!r}")
+    values = tuple(p_values)
+    for value in values:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise TypeError("p-values must be real numbers")
+        if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+            raise ValueError("p-values must be finite probabilities between zero and one")
+    if method == "none" or not values:
+        return tuple(float(value) for value in values)
+    count = len(values)
+    ordered = sorted(
+        enumerate(float(value) for value in values), key=lambda item: (item[1], item[0])
+    )
+    adjusted = [0.0] * count
+    if method == "bonferroni":
+        return tuple(min(1.0, value * count) for value in values)
+    if method == "holm":
+        running = 0.0
+        for rank, (index, value) in enumerate(ordered):
+            running = max(running, min(1.0, value * (count - rank)))
+            adjusted[index] = running
+    else:
+        running = 1.0
+        for rank in range(count - 1, -1, -1):
+            index, value = ordered[rank]
+            running = min(running, min(1.0, value * count / (rank + 1)))
+            adjusted[index] = running
+    return tuple(adjusted)
 
 
 def confidence_interval(

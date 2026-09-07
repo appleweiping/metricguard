@@ -30,7 +30,7 @@ from .reporting import (
     render_json,
     render_markdown,
 )
-from .slices import compare_by_metadata, summarize_by_metadata
+from .slices import compare_by_metadata, correct_slice_p_values, summarize_by_metadata
 from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
 from .streaming import evaluate_stream
 from .suite import EvaluationSuite
@@ -202,6 +202,13 @@ def _parser() -> argparse.ArgumentParser:
     compare_slices.add_argument("--direction", choices=("higher", "lower"), default="higher")
     compare_slices.add_argument("--minimum-delta", type=float, default=0.0)
     compare_slices.add_argument("--minimum-lower-bound", type=float)
+    compare_slices.add_argument(
+        "--p-value-correction",
+        choices=("none", "bonferroni", "holm", "benjamini-hochberg"),
+        default="none",
+        help="adjust the family of slice p-values before reporting significance",
+    )
+    compare_slices.add_argument("--alpha", type=float, default=0.05)
     compare_slices.add_argument("--output", type=Path)
     compare_slices.set_defaults(handler=_compare_slices)
     matrix = subcommands.add_parser("matrix", help="evaluate several metrics over one case suite")
@@ -437,18 +444,31 @@ def _compare_slices(args: argparse.Namespace) -> int:
         minimum_lower_bound=args.minimum_lower_bound,
         direction=args.direction,
     )
+    if args.p_value_correction != "none":
+        comparisons = correct_slice_p_values(
+            comparisons,
+            method=args.p_value_correction,
+            alpha=args.alpha,
+        )
     payload = {
         "metric": metric.name,
         "field": args.field,
         "slices": [comparison.to_dict() for comparison in comparisons],
         "passed": bool(comparisons) and all(comparison.passed for comparison in comparisons),
+        "p_value_correction": args.p_value_correction,
+        "alpha": args.alpha,
     }
     rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
     else:
         print(rendered, end="")
-    return 0 if payload["passed"] else 2
+    significant = args.p_value_correction == "none" or all(
+        comparison.significance_passed is True
+        for comparison in comparisons
+        if comparison.comparison is not None and comparison.error is None
+    )
+    return 0 if payload["passed"] and significant else 2
 
 
 def _matrix(args: argparse.Namespace) -> int:
