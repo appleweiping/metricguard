@@ -204,6 +204,10 @@ For multi-page OCR manifests, `metricguard ocr-document` preserves deterministic
 page order and emits both a global report and sorted per-document CER/WER/exact-
 match summaries. See [document-level OCR](docs/document-ocr.md).
 
+For very large JSONL suites, `metricguard stream-run` and `evaluate_stream`
+provide bounded-memory aggregate evaluation while retaining deterministic error
+and per-tag summaries. See [streaming evaluation](docs/streaming.md).
+
 ## Contracts
 
 A `Contract` can check:

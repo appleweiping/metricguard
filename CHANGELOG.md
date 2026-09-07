@@ -14,6 +14,8 @@ All notable changes follow the principles of Keep a Changelog.
   reports, and the `metricguard ocr-document` CLI.
 - Add a `metricguard confidence` CLI for deterministic bootstrap intervals and
   per-tag summaries.
+- Add bounded-memory JSONL evaluation through `iter_cases`, `evaluate_stream`,
+  and the `metricguard stream-run` CLI with deterministic tag/error aggregates.
 
 ### Added
 

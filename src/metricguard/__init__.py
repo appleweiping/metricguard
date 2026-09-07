@@ -45,6 +45,7 @@ from .statistics import (
     report_confidence_interval,
     summarize_by_tag,
 )
+from .streaming import StreamingReport, StreamingTagSummary, evaluate_stream
 from .suite import EvaluationSuite
 
 __all__ = [
@@ -79,6 +80,8 @@ __all__ = [
     "RunnerReport",
     "SentenceBleu",
     "Severity",
+    "StreamingReport",
+    "StreamingTagSummary",
     "SuiteReport",
     "TagSummary",
     "TextNormalizer",
@@ -87,6 +90,7 @@ __all__ = [
     "build_metric",
     "compare_case_sets",
     "confidence_interval",
+    "evaluate_stream",
     "load_ocr_cases",
     "load_ocr_document_cases",
     "load_ocr_image_cases",

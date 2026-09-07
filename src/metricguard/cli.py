@@ -13,7 +13,7 @@ from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
 from .document import load_ocr_document_cases, run_document_ocr_benchmark
 from .experiment import ExperimentMatrix, ExperimentSpec
-from .io import CaseFormatError, load_cases, load_metric_config
+from .io import CaseFormatError, iter_cases, load_cases, load_metric_config
 from .metrics import build_metric
 from .models import UndefinedPolicy
 from .ocr import (
@@ -31,6 +31,7 @@ from .reporting import (
     render_markdown,
 )
 from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
+from .streaming import evaluate_stream
 from .suite import EvaluationSuite
 
 
@@ -72,6 +73,26 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--format", choices=["json", "markdown"], default="markdown")
     run.add_argument("--output", type=Path)
     run.set_defaults(handler=_run)
+    stream_run = subcommands.add_parser(
+        "stream-run", help="evaluate JSONL cases with bounded-memory aggregation"
+    )
+    stream_run.add_argument("cases", type=Path, help="JSONL case file")
+    stream_metric = stream_run.add_mutually_exclusive_group(required=True)
+    stream_metric.add_argument("--metric")
+    stream_metric.add_argument("--metric-config", type=Path)
+    stream_run.add_argument("--load-plugins", action="store_true")
+    stream_run.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.ERROR.value,
+    )
+    stream_run.add_argument(
+        "--continue-on-error",
+        action="store_true",
+        help="record metric and undefined-policy errors instead of stopping",
+    )
+    stream_run.add_argument("--output", type=Path)
+    stream_run.set_defaults(handler=_stream_run)
     confidence = subcommands.add_parser(
         "confidence", help="report deterministic bootstrap uncertainty for one metric suite"
     )
@@ -228,6 +249,24 @@ def _run(args: argparse.Namespace) -> int:
     else:
         print(rendered, end="")
     return 0 if report.passed_contracts else 2
+
+
+def _stream_run(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases, args.metric_config)
+    config = load_metric_config(args.metric_config) if args.metric_config else args.metric
+    metric = build_metric(config, load_plugins=args.load_plugins)
+    report = evaluate_stream(
+        iter_cases(args.cases),
+        metric,
+        undefined_policy=UndefinedPolicy(args.undefined),
+        fail_fast=not args.continue_on_error,
+    )
+    rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0 if report.passed else 2
 
 
 def _confidence(args: argparse.Namespace) -> int:

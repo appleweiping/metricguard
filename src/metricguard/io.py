@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -37,17 +37,39 @@ def load_cases(path: str | Path) -> tuple[EvaluationCase, ...]:
     return tuple(_parse_case(item, position) for position, item in enumerate(raw_cases, start=1))
 
 
+def iter_cases(path: str | Path) -> Iterator[EvaluationCase]:
+    """Yield cases incrementally from JSONL; JSON arrays remain compatibility-loaded."""
+
+    source = Path(path)
+    if not source.is_file():
+        raise CaseFormatError(f"case file does not exist: {source}")
+    if source.suffix.lower() != ".jsonl":
+        yield from load_cases(source)
+        return
+    seen: set[str] = set()
+    for position, raw in enumerate(_read_jsonl(source), start=1):
+        case = _parse_case(raw, position)
+        if case.case_id in seen:
+            raise CaseFormatError(f"duplicate case ID {case.case_id!r}")
+        seen.add(case.case_id)
+        yield case
+
+
 def _read_jsonl(path: Path) -> Iterable[Any]:
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        if not line.strip():
-            continue
-        try:
-            yield _strict_json_loads(line)
-        except (json.JSONDecodeError, CaseFormatError) as error:
-            column = error.colno if isinstance(error, json.JSONDecodeError) else 1
-            raise CaseFormatError(
-                f"invalid JSON in {path} at line {line_number}, column {column}: {error}"
-            ) from error
+    try:
+        with path.open(encoding="utf-8") as stream:
+            for line_number, line in enumerate(stream, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    yield _strict_json_loads(line)
+                except (json.JSONDecodeError, CaseFormatError) as error:
+                    column = error.colno if isinstance(error, json.JSONDecodeError) else 1
+                    raise CaseFormatError(
+                        f"invalid JSON in {path} at line {line_number}, column {column}: {error}"
+                    ) from error
+    except (OSError, UnicodeError) as error:
+        raise CaseFormatError(f"cannot read case file {path}: {error}") from error
 
 
 def _parse_case(raw: Any, position: int) -> EvaluationCase:
