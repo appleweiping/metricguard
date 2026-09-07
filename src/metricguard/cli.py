@@ -188,6 +188,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=[policy.value for policy in UndefinedPolicy],
         default=UndefinedPolicy.ERROR.value,
     )
+    compare_slices.add_argument(
+        "--load-plugins",
+        action="store_true",
+        help="explicitly discover metricguard.metrics entry points",
+    )
     compare_slices.add_argument("--field", required=True)
     compare_slices.add_argument("--missing", default="<missing>")
     compare_slices.add_argument("--min-count", type=int, default=1)
@@ -412,7 +417,7 @@ def _compare(args: argparse.Namespace) -> int:
 def _compare_slices(args: argparse.Namespace) -> int:
     _ensure_output_is_distinct(args.output, args.baseline, args.candidate, args.metric_config)
     config = load_metric_config(args.metric_config) if args.metric_config else args.metric
-    metric = build_metric(config)
+    metric = build_metric(config, load_plugins=args.load_plugins)
     baseline = tuple(load_cases(args.baseline))
     candidate = tuple(load_cases(args.candidate))
     comparisons = compare_by_metadata(

@@ -137,6 +137,9 @@ def compare_by_metadata(
 ) -> tuple[SliceComparison, ...]:
     """Run paired statistical comparisons independently for metadata slices."""
 
+    _validate_slice_arguments(field, missing, min_count)
+    if direction not in {"higher", "lower"}:
+        raise ValueError("direction must be 'higher' or 'lower'")
     if len({case.case_id for case in baseline_cases}) != len(baseline_cases):
         raise ValueError("baseline cases contain duplicate IDs")
     if len({case.case_id for case in candidate_cases}) != len(candidate_cases):
@@ -190,3 +193,16 @@ def _metadata_key(value: Mapping[str, Any], path: list[str], missing: str) -> st
         return json.dumps(current, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     except (TypeError, ValueError) as error:
         raise ValueError("metadata slice values must be JSON-compatible") from error
+
+
+def _validate_slice_arguments(field: str, missing: str, min_count: int) -> None:
+    if (
+        not isinstance(field, str)
+        or not field.strip()
+        or any(not part.strip() for part in field.split("."))
+    ):
+        raise ValueError("field must be a non-empty dotted metadata path")
+    if not isinstance(missing, str) or not missing:
+        raise ValueError("missing must be a non-empty string")
+    if isinstance(min_count, bool) or not isinstance(min_count, int) or min_count < 1:
+        raise ValueError("min_count must be a positive integer")

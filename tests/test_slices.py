@@ -126,3 +126,23 @@ def test_metadata_slice_comparison_reports_small_slice_errors() -> None:
         min_count=2,
     )
     assert comparisons == ()
+
+
+def test_metadata_slice_comparison_validates_slice_arguments() -> None:
+    cases = (EvaluationCase("a", "yes", "yes", metadata={"group": "x"}),)
+    for field, missing, min_count in (
+        ("", "<missing>", 1),
+        ("group.", "<missing>", 1),
+        ("group", "", 1),
+        ("group", "<missing>", 0),
+    ):
+        with pytest.raises(ValueError):
+            compare_by_metadata(
+                cases,
+                cases,
+                metric=CharacterErrorRate(),
+                field=field,
+                missing=missing,
+                min_count=min_count,
+                undefined_policy=UndefinedPolicy.ERROR,
+            )
