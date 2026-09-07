@@ -14,3 +14,7 @@ This is a workload benchmark, not a promise that timings transfer between machin
 Run from an otherwise idle system, record at least three trials, and compare the
 median with identical arguments. The script intentionally keeps generated inputs in
 memory so filesystem cache behavior does not dominate metric timings.
+
+`benchmark_fixture.py` runs token F1 and word error rate over the checked-in
+baseline case file, recording its digest and environment. This fixture-real run
+is separate from generated throughput and bootstrap workloads.

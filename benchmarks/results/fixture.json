@@ -1,0 +1,14 @@
+{
+  "cases": 3,
+  "elapsed_seconds": 0.005486300011398271,
+  "kind": "fixture-real",
+  "peak_python_bytes": 15131,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.5",
+  "source": "examples/baseline_cases.jsonl",
+  "source_bytes": 270,
+  "source_sha256": "53e1b969ac4aeffdd35f6e95aeeb3bf715ff8f93db303bc3abdc7eac6719efa8",
+  "token_f1_mean": 0.4666666666666666,
+  "word_error_rate_mean": 0.5,
+  "word_error_rate_skipped": 1
+}
