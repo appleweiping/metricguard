@@ -52,3 +52,7 @@ rather than being interpreted by MetricGuard's own parser; use the
 Use `--timeout`, `--max-output-bytes`, and `--undefined` to make resource and
 empty-reference behavior explicit. A backend failure is reported as a clean
 non-zero CLI result rather than being hidden as a metric score.
+
+For manifests containing multiple pages per document, see
+[document-level OCR](document-ocr.md). It preserves deterministic page order
+and emits both global and per-document reports through `ocr-document`.

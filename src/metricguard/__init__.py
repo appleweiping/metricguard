@@ -3,6 +3,13 @@
 from .advanced_metrics import LevenshteinSimilarity, RougeL, SentenceBleu
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .document import (
+    OcrDocumentPage,
+    OcrDocumentReport,
+    OcrDocumentSummary,
+    load_ocr_document_cases,
+    run_document_ocr_benchmark,
+)
 from .edit_metrics import CharacterErrorRate, WordErrorRate
 from .experiment import ExperimentMatrix, ExperimentResult, ExperimentSpec, LeaderboardEntry
 from .metrics import Metric, build_metric
@@ -62,6 +69,9 @@ __all__ = [
     "MetricRunner",
     "MetricValue",
     "OcrBenchmarkReport",
+    "OcrDocumentPage",
+    "OcrDocumentReport",
+    "OcrDocumentSummary",
     "OcrImageCase",
     "PairedComparison",
     "RankingMetric",
@@ -78,9 +88,11 @@ __all__ = [
     "compare_case_sets",
     "confidence_interval",
     "load_ocr_cases",
+    "load_ocr_document_cases",
     "load_ocr_image_cases",
     "paired_comparison",
     "report_confidence_interval",
+    "run_document_ocr_benchmark",
     "run_ocr_backend_benchmark",
     "run_ocr_benchmark",
     "summarize_by_tag",

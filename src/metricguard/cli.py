@@ -11,6 +11,7 @@ from pathlib import Path
 from . import __version__
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .document import load_ocr_document_cases, run_document_ocr_benchmark
 from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, load_cases, load_metric_config
 from .metrics import build_metric
@@ -177,6 +178,26 @@ def _parser() -> argparse.ArgumentParser:
     )
     ocr_backend.add_argument("--output", type=Path)
     ocr_backend.set_defaults(handler=_ocr_backend)
+    ocr_document = subcommands.add_parser(
+        "ocr-document", help="evaluate ordered OCR pages with document-level summaries"
+    )
+    ocr_document.add_argument("cases", type=Path)
+    ocr_document.add_argument(
+        "--command",
+        action="append",
+        required=True,
+        metavar="ARG",
+        help="one argv token; repeat for the complete template containing exactly one {image}",
+    )
+    ocr_document.add_argument("--timeout", type=float, default=120.0)
+    ocr_document.add_argument("--max-output-bytes", type=int, default=4 * 1024 * 1024)
+    ocr_document.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.SKIP.value,
+    )
+    ocr_document.add_argument("--output", type=Path)
+    ocr_document.set_defaults(handler=_ocr_document)
     return parser
 
 
@@ -342,6 +363,31 @@ def _ocr_backend(args: argparse.Namespace) -> int:
     )
     report = run_ocr_backend_benchmark(
         load_ocr_image_cases(args.cases), backend, undefined_policy=UndefinedPolicy(args.undefined)
+    )
+    rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _ocr_document(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    backend = CommandOcrBackend(
+        args.command,
+        timeout=args.timeout,
+        max_output_bytes=args.max_output_bytes,
+    )
+    pages = load_ocr_document_cases(args.cases)
+
+    def transcribe(page) -> str:  # type: ignore[no-untyped-def]
+        if page.image is None:
+            raise ValueError(f"OCR document page {page.page_id!r} has no image path")
+        return backend(page.image)
+
+    report = run_document_ocr_benchmark(
+        pages, transcribe, undefined_policy=UndefinedPolicy(args.undefined)
     )
     rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
     if args.output:

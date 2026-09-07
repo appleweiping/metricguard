@@ -200,6 +200,10 @@ opt-in discovery, not sandboxing. Comparison uses one metric instance and assume
 its evaluation is deterministic. Select the correct optimization direction before
 using a plugin score as a regression gate.
 
+For multi-page OCR manifests, `metricguard ocr-document` preserves deterministic
+page order and emits both a global report and sorted per-document CER/WER/exact-
+match summaries. See [document-level OCR](docs/document-ocr.md).
+
 ## Contracts
 
 A `Contract` can check:
