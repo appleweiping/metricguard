@@ -8,9 +8,9 @@ metrics: `precision_at_k`, `recall_at_k`, `reciprocal_rank_at_k`,
 from metricguard import EvaluationCase, EvaluationSuite, build_metric
 
 metric = build_metric({"kind": "ndcg_at_k", "k": 3})
-report = EvaluationSuite([
-    EvaluationCase("query-1", {"doc-a": 3, "doc-b": 1}, ["doc-b", "doc-a"])
-]).run(metric)
+report = EvaluationSuite(
+    [EvaluationCase("query-1", {"doc-a": 3, "doc-b": 1}, ["doc-b", "doc-a"])]
+).run(metric)
 assert report.mean_score is not None
 ```
 

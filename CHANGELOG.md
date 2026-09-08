@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add deterministic cross-metric Pearson and Spearman correlation reports with
+  pairwise-complete score alignment, explicit missing-data reasons, a CLI
+  `correlate` command, and loopback-service support.
+
 All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]

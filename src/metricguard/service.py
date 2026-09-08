@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .comparison import compare_case_sets
+from .correlation import correlate_reports
 from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import load_cases, load_metric_config
 from .metrics import Metric, build_metric
@@ -105,7 +106,27 @@ class MetricService:
                     for item in leaderboard
                 ],
             }
-        raise ValueError("operation must be run, compare, or matrix")
+        if operation == "correlate":
+            cases = tuple(load_cases(_path(request, "cases")))
+            metrics = request.get("metrics")
+            if (
+                not isinstance(metrics, list)
+                or len(metrics) < 2
+                or not all(isinstance(name, str) and name.strip() for name in metrics)
+            ):
+                raise ValueError("metrics must be an array of at least two names")
+            if len(set(metrics)) != len(metrics):
+                raise ValueError("metrics must contain unique names")
+            reports = {
+                name: EvaluationSuite(cases, undefined_policy=undefined).run(build_metric(name))
+                for name in metrics
+            }
+            result = correlate_reports(
+                reports,
+                minimum_count=_integer(request, "minimum_count", 2, minimum=2),
+            )
+            return {"operation": operation, "correlation": result.to_dict()}
+        raise ValueError("operation must be run, compare, matrix, or correlate")
 
 
 def create_server(

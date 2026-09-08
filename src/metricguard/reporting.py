@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .correlation import CorrelationReport
 from .models import SuiteReport
 from .statistics import PairedComparison
 
@@ -187,6 +188,64 @@ def render_comparison_markdown(comparison: PairedComparison) -> str:
     if comparison.minimum_lower_bound is not None:
         lines.append(f"- Minimum confidence lower bound: {comparison.minimum_lower_bound:+.6f}")
     return "\n".join(lines) + "\n"
+
+
+def render_correlation_json(report: CorrelationReport) -> str:
+    """Render a deterministic cross-metric correlation report."""
+
+    return json.dumps(report.to_dict(), indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+
+
+def render_correlation_markdown(report: CorrelationReport) -> str:
+    """Render a compact, reviewable correlation matrix."""
+
+    lines = [
+        "# MetricGuard correlation report",
+        "",
+        "Pairwise-complete scores are used; `n/a` means insufficient data or a constant vector.",
+        "",
+        "## Pearson correlation",
+        "",
+        _render_correlation_table(report, "pearson"),
+        "",
+        "## Spearman correlation",
+        "",
+        _render_correlation_table(report, "spearman"),
+        "",
+        "## Pair details",
+        "",
+        "| Metric pair | Cases | Pearson | Spearman | Note |",
+        "|---|---:|---:|---:|---|",
+    ]
+    for item in report.pairs:
+        lines.append(
+            f"| `{_markdown_text(item.left)}` / `{_markdown_text(item.right)}` | "
+            f"{item.count} | {_format_correlation(item.pearson)} | "
+            f"{_format_correlation(item.spearman)} | {_markdown_text(item.reason or '')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _render_correlation_table(report: CorrelationReport, attribute: str) -> str:
+    header = (
+        "| Metric | " + " | ".join(f"`{_markdown_text(name)}`" for name in report.metrics) + " |"
+    )
+    divider = "|---|" + "---:|" * len(report.metrics)
+    rows = [header, divider]
+    payload = report.to_dict()[attribute]
+    for name in report.metrics:
+        rows.append(
+            "| `"
+            + _markdown_text(name)
+            + "` | "
+            + " | ".join(_format_correlation(payload[name][other]) for other in report.metrics)
+            + " |"
+        )
+    return "\n".join(rows)
+
+
+def _format_correlation(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.6f}"
 
 
 def _markdown_text(value: str) -> str:

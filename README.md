@@ -198,6 +198,9 @@ For a family of metadata slices, use the explicit
 `compare-slices`.
 For several metadata dimensions, `compare-family` applies one correction
 family across every slice; see [comparison families](docs/comparison-families.md).
+For cross-task diagnostics, `correlate` reports pairwise-complete Pearson and
+Spearman matrices with explicit handling for skipped and constant scores; see
+[cross-metric correlation](docs/correlation.md).
 
 ## Metric plugins
 
@@ -295,6 +298,7 @@ is available in [`benchmarks/`](benchmarks/README.md). See
   metadata dimensions.
 - A versioned migration command is available as `migrate-report` when a report
   schema changes.
+- Cross-metric Pearson/Spearman analysis is available through `correlate`.
 
 ## License
 

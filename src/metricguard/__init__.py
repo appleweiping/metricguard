@@ -3,6 +3,7 @@
 from .advanced_metrics import LevenshteinSimilarity, RougeL, SentenceBleu
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .correlation import CorrelationReport, MetricCorrelation, correlate_reports
 from .document import (
     OcrDocumentPage,
     OcrDocumentReport,
@@ -69,6 +70,7 @@ __all__ = [
     "ConfidenceInterval",
     "Contract",
     "ContractAuditor",
+    "CorrelationReport",
     "EvaluationCase",
     "EvaluationSuite",
     "ExperimentMatrix",
@@ -78,6 +80,7 @@ __all__ = [
     "LevenshteinSimilarity",
     "MetadataFamilyComparison",
     "Metric",
+    "MetricCorrelation",
     "MetricPluginError",
     "MetricRegistry",
     "MetricRunner",
@@ -110,6 +113,7 @@ __all__ = [
     "compare_metadata_family",
     "confidence_interval",
     "correct_slice_p_values",
+    "correlate_reports",
     "create_server",
     "evaluate_stream",
     "load_ocr_cases",

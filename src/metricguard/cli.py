@@ -11,6 +11,7 @@ from pathlib import Path
 from . import __version__
 from .comparison import compare_case_sets
 from .contracts import Contract, ContractAuditor
+from .correlation import correlate_reports
 from .document import load_ocr_document_cases, run_document_ocr_benchmark
 from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import CaseFormatError, iter_cases, load_cases, load_metric_config
@@ -28,6 +29,8 @@ from .registry import MetricRegistry
 from .reporting import (
     render_comparison_json,
     render_comparison_markdown,
+    render_correlation_json,
+    render_correlation_markdown,
     render_json,
     render_markdown,
 )
@@ -270,6 +273,20 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--cache-dir", type=Path)
     matrix.add_argument("--output", type=Path)
     matrix.set_defaults(handler=_matrix)
+    correlate = subcommands.add_parser(
+        "correlate", help="analyze Pearson and Spearman agreement across metrics"
+    )
+    correlate.add_argument("cases", type=Path)
+    correlate.add_argument("--metrics", required=True, help="comma-separated built-in metric names")
+    correlate.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.SKIP.value,
+    )
+    correlate.add_argument("--minimum-count", type=int, default=2)
+    correlate.add_argument("--format", choices=["json", "markdown"], default="markdown")
+    correlate.add_argument("--output", type=Path)
+    correlate.set_defaults(handler=_correlate)
     ocr = subcommands.add_parser("ocr", help="evaluate OCR reference/prediction text pairs")
     ocr.add_argument("cases", type=Path)
     ocr.add_argument(
@@ -583,6 +600,30 @@ def _matrix(args: argparse.Namespace) -> int:
             sort_keys=True,
         )
         + "\n"
+    )
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _correlate(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    names = tuple(name.strip() for name in args.metrics.split(",") if name.strip())
+    if len(names) < 2 or len(names) != len(set(names)):
+        raise ValueError("--metrics must contain at least two unique comma-separated names")
+    cases = tuple(load_cases(args.cases))
+    policy = UndefinedPolicy(args.undefined)
+    reports = {
+        name: EvaluationSuite(cases, undefined_policy=policy).run(build_metric(name))
+        for name in names
+    }
+    report = correlate_reports(reports, minimum_count=args.minimum_count)
+    rendered = (
+        render_correlation_json(report)
+        if args.format == "json"
+        else render_correlation_markdown(report)
     )
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")

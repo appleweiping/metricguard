@@ -7,11 +7,13 @@ case alignment, and deterministic bootstrap code as the CLI.
 ```python
 from metricguard import MetricService
 
-result = MetricService().dispatch({
-    "operation": "run",
-    "cases": "examples/text_cases.jsonl",
-    "metric": "exact_match",
-})
+result = MetricService().dispatch(
+    {
+        "operation": "run",
+        "cases": "examples/text_cases.jsonl",
+        "metric": "exact_match",
+    }
+)
 ```
 
 `compare` accepts baseline and candidate paths plus the normal paired bootstrap
