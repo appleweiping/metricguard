@@ -4,6 +4,8 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add a strict loopback JSON/HTTP service for metric runs and paired comparisons.
+
 - Add `compare-family` and `compare_metadata_family` for one corrected p-value family across metadata dimensions.
 
 - Add `migrate-report` and a public report migration API for legacy JSON report

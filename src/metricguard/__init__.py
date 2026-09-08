@@ -36,6 +36,7 @@ from .ocr import (
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
+from .service import MetricService, create_server
 from .slices import (
     MetadataFamilyComparison,
     SliceComparison,
@@ -80,6 +81,7 @@ __all__ = [
     "MetricPluginError",
     "MetricRegistry",
     "MetricRunner",
+    "MetricService",
     "MetricValue",
     "OcrBenchmarkReport",
     "OcrDocumentPage",
@@ -108,6 +110,7 @@ __all__ = [
     "compare_metadata_family",
     "confidence_interval",
     "correct_slice_p_values",
+    "create_server",
     "evaluate_stream",
     "load_ocr_cases",
     "load_ocr_document_cases",
