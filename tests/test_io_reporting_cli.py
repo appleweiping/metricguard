@@ -422,6 +422,43 @@ def test_cli_compare_slices_fails_when_metadata_moves(
     assert "changed metadata slice value" in capsys.readouterr().err
 
 
+def test_cli_compare_family_uses_one_correction_family(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    baseline = write(
+        tmp_path / "baseline-family.jsonl",
+        '{"id":"a","reference":"yes","prediction":"no","metadata":{"group":"x","language":"en"}}\n'
+        '{"id":"b","reference":"yes","prediction":"yes","metadata":{"group":"y","language":"fr"}}\n',
+    )
+    candidate = write(
+        tmp_path / "candidate-family.jsonl",
+        '{"id":"a","reference":"yes","prediction":"yes","metadata":{"group":"x","language":"en"}}\n'
+        '{"id":"b","reference":"yes","prediction":"yes","metadata":{"group":"y","language":"fr"}}\n',
+    )
+    assert (
+        main(
+            [
+                "compare-family",
+                str(baseline),
+                str(candidate),
+                "--metric",
+                "exact_match",
+                "--fields",
+                "group,language",
+                "--samples",
+                "17",
+                "--alpha",
+                "1.0",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["fields"] == ["group", "language"]
+    assert len(payload["comparisons"]) == 4
+    assert payload["passed"] is True
+
+
 def test_cli_compare_rejects_dataset_drift(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -31,7 +31,12 @@ from .reporting import (
     render_json,
     render_markdown,
 )
-from .slices import compare_by_metadata, correct_slice_p_values, summarize_by_metadata
+from .slices import (
+    compare_by_metadata,
+    compare_metadata_family,
+    correct_slice_p_values,
+    summarize_by_metadata,
+)
 from .statistics import BootstrapConfig, report_confidence_interval, summarize_by_tag
 from .streaming import evaluate_stream
 from .suite import EvaluationSuite
@@ -219,6 +224,39 @@ def _parser() -> argparse.ArgumentParser:
     compare_slices.add_argument("--alpha", type=float, default=0.05)
     compare_slices.add_argument("--output", type=Path)
     compare_slices.set_defaults(handler=_compare_slices)
+    compare_family = subcommands.add_parser(
+        "compare-family", help="compare several metadata fields under one p-value family"
+    )
+    compare_family.add_argument("baseline", type=Path)
+    compare_family.add_argument("candidate", type=Path)
+    compare_family_metric = compare_family.add_mutually_exclusive_group(required=True)
+    compare_family_metric.add_argument("--metric")
+    compare_family_metric.add_argument("--metric-config", type=Path)
+    compare_family.add_argument("--load-plugins", action="store_true")
+    compare_family.add_argument(
+        "--fields", required=True, help="comma-separated dotted metadata paths"
+    )
+    compare_family.add_argument(
+        "--undefined",
+        choices=[policy.value for policy in UndefinedPolicy],
+        default=UndefinedPolicy.ERROR.value,
+    )
+    compare_family.add_argument("--missing", default="<missing>")
+    compare_family.add_argument("--min-count", type=int, default=1)
+    compare_family.add_argument("--samples", type=int, default=2_000)
+    compare_family.add_argument("--confidence", type=float, default=0.95)
+    compare_family.add_argument("--seed", type=int, default=0)
+    compare_family.add_argument("--direction", choices=("higher", "lower"), default="higher")
+    compare_family.add_argument("--minimum-delta", type=float, default=0.0)
+    compare_family.add_argument("--minimum-lower-bound", type=float)
+    compare_family.add_argument(
+        "--p-value-correction",
+        choices=("none", "bonferroni", "holm", "benjamini-hochberg"),
+        default="holm",
+    )
+    compare_family.add_argument("--alpha", type=float, default=0.05)
+    compare_family.add_argument("--output", type=Path)
+    compare_family.set_defaults(handler=_compare_family)
     matrix = subcommands.add_parser("matrix", help="evaluate several metrics over one case suite")
     matrix.add_argument("cases", type=Path)
     matrix.add_argument("--metrics", required=True, help="comma-separated built-in metric names")
@@ -477,6 +515,39 @@ def _compare_slices(args: argparse.Namespace) -> int:
         if comparison.comparison is not None and comparison.error is None
     )
     return 0 if payload["passed"] and significant else 2
+
+
+def _compare_family(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.baseline, args.candidate, args.metric_config)
+    fields = tuple(item.strip() for item in args.fields.split(",") if item.strip())
+    config = load_metric_config(args.metric_config) if args.metric_config else args.metric
+    metric = build_metric(config, load_plugins=args.load_plugins)
+    family = compare_metadata_family(
+        tuple(load_cases(args.baseline)),
+        tuple(load_cases(args.candidate)),
+        metric=metric,
+        fields=fields,
+        undefined_policy=UndefinedPolicy(args.undefined),
+        bootstrap=BootstrapConfig(
+            samples=args.samples,
+            confidence=args.confidence,
+            seed=args.seed,
+        ),
+        missing=args.missing,
+        min_count=args.min_count,
+        minimum_delta=args.minimum_delta,
+        minimum_lower_bound=args.minimum_lower_bound,
+        direction=args.direction,
+        correction=args.p_value_correction,
+        alpha=args.alpha,
+    )
+    payload = {"metric": metric.name, **family.to_dict()}
+    rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0 if family.passed else 2
 
 
 def _matrix(args: argparse.Namespace) -> int:

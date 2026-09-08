@@ -4,9 +4,11 @@ from metricguard import (
     BootstrapConfig,
     EvaluationCase,
     EvaluationSuite,
+    MetadataFamilyComparison,
     SliceSummary,
     UndefinedPolicy,
     compare_by_metadata,
+    compare_metadata_family,
     correct_slice_p_values,
     summarize_by_metadata,
 )
@@ -176,3 +178,54 @@ def test_metadata_slice_comparison_applies_family_correction_without_changing_ga
 def test_metadata_slice_correction_validates_alpha() -> None:
     with pytest.raises(ValueError, match="alpha"):
         correct_slice_p_values((), method="holm", alpha=0)
+
+
+def test_metadata_family_corrects_across_fields() -> None:
+    baseline = tuple(
+        EvaluationCase(
+            f"c{index}",
+            "yes",
+            "no",
+            metadata={"group": group, "language": language},
+        )
+        for index, (group, language) in enumerate(
+            (("a", "en"), ("a", "en"), ("b", "fr"), ("b", "fr"))
+        )
+    )
+    candidate = tuple(
+        EvaluationCase(
+            case.case_id,
+            case.reference,
+            "yes",
+            metadata=case.metadata,
+        )
+        for case in baseline
+    )
+    family = compare_metadata_family(
+        baseline,
+        candidate,
+        metric=CharacterErrorRate(),
+        fields=("group", "language"),
+        undefined_policy=UndefinedPolicy.ERROR,
+        bootstrap=BootstrapConfig(samples=16, seed=2),
+        direction="lower",
+        correction="holm",
+        alpha=1.0,
+    )
+    assert isinstance(family, MetadataFamilyComparison)
+    assert len(family.comparisons) == 4
+    assert all(item.adjusted_p_value is not None for item in family.comparisons)
+    assert family.passed
+    assert family.to_dict()["fields"] == ["group", "language"]
+
+
+def test_metadata_family_rejects_duplicate_fields() -> None:
+    cases = (EvaluationCase("a", "yes", "yes", metadata={"group": "x"}),)
+    with pytest.raises(ValueError, match="unique"):
+        compare_metadata_family(
+            cases,
+            cases,
+            metric=CharacterErrorRate(),
+            fields=("group", "group"),
+            undefined_policy=UndefinedPolicy.ERROR,
+        )

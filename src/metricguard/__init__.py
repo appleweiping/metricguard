@@ -37,9 +37,11 @@ from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
 from .runner import MetricRunner, RunnerReport
 from .slices import (
+    MetadataFamilyComparison,
     SliceComparison,
     SliceSummary,
     compare_by_metadata,
+    compare_metadata_family,
     correct_slice_p_values,
     summarize_by_metadata,
 )
@@ -73,6 +75,7 @@ __all__ = [
     "ExperimentSpec",
     "LeaderboardEntry",
     "LevenshteinSimilarity",
+    "MetadataFamilyComparison",
     "Metric",
     "MetricPluginError",
     "MetricRegistry",
@@ -102,6 +105,7 @@ __all__ = [
     "build_metric",
     "compare_by_metadata",
     "compare_case_sets",
+    "compare_metadata_family",
     "confidence_interval",
     "correct_slice_p_values",
     "evaluate_stream",

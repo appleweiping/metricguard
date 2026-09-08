@@ -194,6 +194,8 @@ it silently changes the evaluated population. Tag summaries are available throug
 For a family of metadata slices, use the explicit
 [multiple-comparison correction](docs/multiple-comparison.md) option on
 `compare-slices`.
+For several metadata dimensions, `compare-family` applies one correction
+family across every slice; see [comparison families](docs/comparison-families.md).
 
 ## Metric plugins
 
@@ -287,7 +289,8 @@ is available in [`benchmarks/`](benchmarks/README.md). See
 
 - Streaming aggregation is available through `stream-run`.
 - Multiple-comparison corrections are available through `compare-slices`;
-  future work includes correction-aware report families beyond metadata slices.
+  `compare-family` applies one correction-aware report family across several
+  metadata dimensions.
 - A versioned migration command is available as `migrate-report` when a report
   schema changes.
 

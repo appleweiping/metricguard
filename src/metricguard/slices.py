@@ -82,6 +82,42 @@ class SliceComparison:
         return payload
 
 
+@dataclass(frozen=True, slots=True)
+class MetadataFamilyComparison:
+    """A corrected family of comparisons across multiple metadata fields."""
+
+    fields: tuple[str, ...]
+    comparisons: tuple[SliceComparison, ...]
+    correction: CorrectionMethod
+    alpha: float
+
+    @property
+    def passed(self) -> bool:
+        """Return whether every slice passes its effect and family significance gate."""
+
+        if not self.comparisons:
+            return False
+        return all(
+            row.passed
+            and (
+                self.correction == "none"
+                or row.comparison is None
+                or row.significance_passed is True
+            )
+            for row in self.comparisons
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "fields": list(self.fields),
+            "correction": self.correction,
+            "alpha": self.alpha,
+            "passed": self.passed,
+            "comparisons": [item.to_dict() for item in self.comparisons],
+        }
+
+
 def correct_slice_p_values(
     comparisons: Iterable[SliceComparison],
     *,
@@ -224,6 +260,62 @@ def compare_by_metadata(
         except (TypeError, ValueError) as error:
             results.append(SliceComparison(field, value, len(case_ids), error=str(error)))
     return tuple(results)
+
+
+def compare_metadata_family(
+    baseline_cases: tuple[EvaluationCase, ...],
+    candidate_cases: tuple[EvaluationCase, ...],
+    *,
+    metric: Metric,
+    fields: Iterable[str],
+    undefined_policy: UndefinedPolicy,
+    bootstrap: BootstrapConfig | None = None,
+    missing: str = "<missing>",
+    min_count: int = 1,
+    minimum_delta: float = 0.0,
+    minimum_lower_bound: float | None = None,
+    direction: Literal["higher", "lower"] = "higher",
+    correction: CorrectionMethod = "none",
+    alpha: float = 0.05,
+) -> MetadataFamilyComparison:
+    """Compare several metadata dimensions and correct one shared p-value family.
+
+    Unlike repeated calls to :func:`compare_by_metadata`, all successful slice
+    p-values across every requested field enter one correction family. This
+    prevents a caller from accidentally treating a collection of exploratory
+    slice reports as independent confirmatory claims.
+    """
+
+    names = tuple(fields)
+    if not names or len(names) != len(set(names)):
+        raise ValueError("fields must contain at least one unique metadata path")
+    if correction not in {"none", "bonferroni", "holm", "benjamini-hochberg"}:
+        raise ValueError(f"unsupported p-value correction {correction!r}")
+    if isinstance(alpha, bool) or not isinstance(alpha, (int, float)) or not 0 < alpha <= 1:
+        raise ValueError("alpha must be between zero and one")
+    rows: list[SliceComparison] = []
+    for field in names:
+        rows.extend(
+            compare_by_metadata(
+                baseline_cases,
+                candidate_cases,
+                metric=metric,
+                field=field,
+                undefined_policy=undefined_policy,
+                bootstrap=bootstrap,
+                missing=missing,
+                min_count=min_count,
+                minimum_delta=minimum_delta,
+                minimum_lower_bound=minimum_lower_bound,
+                direction=direction,
+            )
+        )
+    corrected = (
+        correct_slice_p_values(rows, method=correction, alpha=float(alpha))
+        if correction != "none"
+        else tuple(rows)
+    )
+    return MetadataFamilyComparison(names, corrected, correction, float(alpha))
 
 
 def _metadata_key(value: Mapping[str, Any], path: list[str], missing: str) -> str:
