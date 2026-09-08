@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
 from .comparison import compare_case_sets
 from .correlation import correlate_reports
@@ -17,6 +17,7 @@ from .metrics import Metric, build_metric
 from .models import UndefinedPolicy
 from .reliability import calibration_report
 from .reporting import comparison_to_dict, report_to_dict
+from .slices import compare_by_metadata, compare_metadata_family, summarize_by_metadata
 from .statistics import BootstrapConfig
 from .suite import EvaluationSuite
 
@@ -141,7 +142,72 @@ class MetricService:
                 bins=_integer(request, "bins", 10, minimum=2),
             )
             return {"operation": operation, "report": calibration.to_dict()}
-        raise ValueError("operation must be run, compare, matrix, correlate, or calibrate")
+        if operation == "slices":
+            cases = tuple(load_cases(_path(request, "cases")))
+            field = request.get("field")
+            if not isinstance(field, str) or not field.strip():
+                raise ValueError("field must be a non-empty metadata path")
+            report = EvaluationSuite(cases, undefined_policy=undefined).run(_metric(request))
+            summaries = summarize_by_metadata(
+                report,
+                cases,
+                field,
+                missing=_string(request, "missing", "<missing>"),
+                min_count=_integer(request, "min_count", 1, minimum=1),
+            )
+            return {
+                "operation": operation,
+                "summaries": [summary.to_dict() for summary in summaries],
+            }
+        if operation == "compare_slices":
+            field = request.get("field")
+            if not isinstance(field, str) or not field.strip():
+                raise ValueError("field must be a non-empty metadata path")
+            comparisons = compare_by_metadata(
+                tuple(load_cases(_path(request, "baseline"))),
+                tuple(load_cases(_path(request, "candidate"))),
+                metric=_metric(request),
+                field=field,
+                undefined_policy=undefined,
+                bootstrap=_bootstrap(request),
+                missing=_string(request, "missing", "<missing>"),
+                min_count=_integer(request, "min_count", 1, minimum=1),
+                minimum_delta=_number(request, "minimum_delta", 0.0),
+                minimum_lower_bound=_optional_number(request, "minimum_lower_bound"),
+                direction=_direction(request),
+            )
+            return {
+                "operation": operation,
+                "comparisons": [comparison.to_dict() for comparison in comparisons],
+            }
+        if operation == "compare_family":
+            fields = request.get("fields")
+            if (
+                not isinstance(fields, list)
+                or not fields
+                or not all(isinstance(field, str) and field.strip() for field in fields)
+            ):
+                raise ValueError("fields must be a non-empty array of metadata paths")
+            family = compare_metadata_family(
+                tuple(load_cases(_path(request, "baseline"))),
+                tuple(load_cases(_path(request, "candidate"))),
+                metric=_metric(request),
+                fields=fields,
+                undefined_policy=undefined,
+                bootstrap=_bootstrap(request),
+                missing=_string(request, "missing", "<missing>"),
+                min_count=_integer(request, "min_count", 1, minimum=1),
+                minimum_delta=_number(request, "minimum_delta", 0.0),
+                minimum_lower_bound=_optional_number(request, "minimum_lower_bound"),
+                direction=_direction(request),
+                correction=_correction(request),
+                alpha=_number(request, "alpha", 0.05),
+            )
+            return {"operation": operation, "family": family.to_dict()}
+        raise ValueError(
+            "operation must be run, compare, matrix, correlate, calibrate, slices, "
+            "compare_slices, or compare_family"
+        )
 
 
 def create_server(
@@ -232,6 +298,47 @@ def _number(request: Mapping[str, Any], name: str, default: float) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be a number")
     return float(value)
+
+
+def _optional_number(request: Mapping[str, Any], name: str) -> float | None:
+    value = request.get(name)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a number or omitted")
+    return float(value)
+
+
+def _string(request: Mapping[str, Any], name: str, default: str) -> str:
+    value = request.get(name, default)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{name} must be a non-empty string")
+    return value
+
+
+def _direction(request: Mapping[str, Any]) -> Literal["higher", "lower"]:
+    value = _string(request, "direction", "higher")
+    if value not in {"higher", "lower"}:
+        raise ValueError("direction must be higher or lower")
+    return cast(Literal["higher", "lower"], value)
+
+
+def _correction(
+    request: Mapping[str, Any],
+) -> Literal["none", "bonferroni", "holm", "benjamini-hochberg"]:
+    value = _string(request, "correction", "none")
+    choices = {"none", "bonferroni", "holm", "benjamini-hochberg"}
+    if value not in choices:
+        raise ValueError("correction must be none, bonferroni, holm, or benjamini-hochberg")
+    return cast(Literal["none", "bonferroni", "holm", "benjamini-hochberg"], value)
+
+
+def _bootstrap(request: Mapping[str, Any]) -> BootstrapConfig:
+    return BootstrapConfig(
+        samples=_integer(request, "samples", 2_000, minimum=1),
+        confidence=_number(request, "confidence", 0.95),
+        seed=_integer(request, "seed", 0),
+    )
 
 
 __all__ = ["MetricService", "create_server"]

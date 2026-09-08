@@ -304,6 +304,9 @@ is available in [`benchmarks/`](benchmarks/README.md). See
 - Confidence calibration (Brier score, expected calibration error, and maximum
   calibration error) is available through `calibrate` and
   `calibration_report()`.
+- Metadata-slice summaries and corrected slice/family comparisons are also
+  available through the local service operations `slices`, `compare_slices`,
+  and `compare_family`.
 
 ## License
 

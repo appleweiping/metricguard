@@ -15,6 +15,8 @@ All notable changes follow the principles of Keep a Changelog.
   `calibrate` CLI command for nested case metadata.
 - Expose confidence calibration through the loopback service with configurable
   nested metadata fields and bin counts.
+- Expose metadata-slice summaries and family-corrected comparisons through the
+  loopback service.
 
 - Add a strict loopback JSON/HTTP service for metric runs and paired comparisons.
 - Add a service-level matrix operation with resumable per-metric caches and leaderboard output.

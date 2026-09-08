@@ -123,6 +123,68 @@ def test_metric_service_calibrates_nested_metadata(tmp_path) -> None:  # type: i
     assert response["report"]["bin_count"] == 5
 
 
+def test_metric_service_reports_metadata_slices(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = tmp_path / "slices.jsonl"
+    cases.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {"id": "a", "reference": "ok", "prediction": "ok", "metadata": {"group": "x"}}
+                ),
+                json.dumps(
+                    {"id": "b", "reference": "ok", "prediction": "no", "metadata": {"group": "y"}}
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    response = MetricService().dispatch(
+        {
+            "operation": "slices",
+            "cases": str(cases),
+            "metric": "exact_match",
+            "field": "group",
+        }
+    )
+    assert [row["value"] for row in response["summaries"]] == ["x", "y"]
+    assert response["summaries"][0]["mean_score"] == 1.0
+
+
+def test_metric_service_compares_slices_and_families(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = tmp_path / "paired-slices.jsonl"
+    rows = [
+        {"id": "a", "reference": "ok", "prediction": "ok", "metadata": {"group": "x", "tier": 1}},
+        {"id": "b", "reference": "ok", "prediction": "no", "metadata": {"group": "x", "tier": 1}},
+        {"id": "c", "reference": "ok", "prediction": "ok", "metadata": {"group": "y", "tier": 2}},
+        {"id": "d", "reference": "ok", "prediction": "no", "metadata": {"group": "y", "tier": 2}},
+    ]
+    cases.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+    service = MetricService()
+    sliced = service.dispatch(
+        {
+            "operation": "compare_slices",
+            "baseline": str(cases),
+            "candidate": str(cases),
+            "metric": "exact_match",
+            "field": "group",
+            "samples": 10,
+        }
+    )
+    assert len(sliced["comparisons"]) == 2
+    family = service.dispatch(
+        {
+            "operation": "compare_family",
+            "baseline": str(cases),
+            "candidate": str(cases),
+            "metric": "exact_match",
+            "fields": ["group", "tier"],
+            "samples": 10,
+            "correction": "none",
+        }
+    )
+    assert family["family"]["fields"] == ["group", "tier"]
+
+
 def test_metric_service_rejects_invalid_port() -> None:
     with pytest.raises(ValueError):
         create_server(port=65536)
