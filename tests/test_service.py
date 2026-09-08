@@ -68,9 +68,39 @@ def test_metric_service_accepts_config_and_rejects_bad_requests(tmp_path) -> Non
         service.dispatch({"operation": "other", "cases": str(cases), "metric": "exact_match"})
 
 
+def test_metric_service_matrix_is_cached_and_ranked(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = _cases(tmp_path)
+    cache = tmp_path / "cache"
+    request = {
+        "operation": "matrix",
+        "cases": str(cases),
+        "metrics": ["exact_match", "word_error_rate"],
+        "cache_dir": str(cache),
+    }
+    service = MetricService()
+    first = service.dispatch(request)
+    second = service.dispatch(request)
+    assert len(first["leaderboard"]) == 2
+    assert all(row["cached"] == 0 for row in first["results"])
+    assert all(row["cached"] == 2 for row in second["results"])
+
+
 def test_metric_service_rejects_invalid_port() -> None:
     with pytest.raises(ValueError):
         create_server(port=65536)
+
+
+def test_metric_service_rejects_invalid_matrix_requests(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = _cases(tmp_path)
+    service = MetricService()
+    with pytest.raises(ValueError):
+        service.dispatch([])  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        service.dispatch({"operation": "matrix", "cases": str(cases), "metrics": []})
+    with pytest.raises(ValueError):
+        service.dispatch(
+            {"operation": "matrix", "cases": str(cases), "metrics": ["exact_match", "exact_match"]}
+        )
 
 
 def test_metric_service_http_dispatch(tmp_path) -> None:  # type: ignore[no-untyped-def]

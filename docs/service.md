@@ -16,3 +16,6 @@ result = MetricService().dispatch({
 
 `compare` accepts baseline and candidate paths plus the normal paired bootstrap
 options. `create_server()` binds to loopback and serves `POST /v1/dispatch`.
+
+`matrix` accepts a unique `metrics` array and optional `cache_dir`; repeated
+requests reuse verified case-level results and return a stable leaderboard.

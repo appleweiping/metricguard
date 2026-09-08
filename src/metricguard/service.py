@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .comparison import compare_case_sets
+from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import load_cases, load_metric_config
 from .metrics import Metric, build_metric
 from .models import UndefinedPolicy
@@ -25,13 +26,14 @@ class MetricService:
         if not isinstance(request, Mapping):
             raise ValueError("request must be an object")
         operation = request.get("operation")
-        metric = _metric(request)
         undefined = _undefined(request)
         if operation == "run":
+            metric = _metric(request)
             cases_path = _path(request, "cases")
             report = EvaluationSuite(load_cases(cases_path), undefined_policy=undefined).run(metric)
             return {"operation": operation, "report": report_to_dict(report)}
         if operation == "compare":
+            metric = _metric(request)
             baseline = tuple(load_cases(_path(request, "baseline")))
             candidate = tuple(load_cases(_path(request, "candidate")))
             comparison = compare_case_sets(
@@ -49,7 +51,61 @@ class MetricService:
                 direction=request.get("direction", "higher"),
             )
             return {"operation": operation, "comparison": comparison_to_dict(comparison)}
-        raise ValueError("operation must be run or compare")
+        if operation == "matrix":
+            cases = tuple(load_cases(_path(request, "cases")))
+            metrics = request.get("metrics")
+            if (
+                not isinstance(metrics, list)
+                or not metrics
+                or not all(isinstance(name, str) and name.strip() for name in metrics)
+            ):
+                raise ValueError("metrics must be a non-empty array of names")
+            if len(set(metrics)) != len(metrics):
+                raise ValueError("metrics must contain unique names")
+            workers = _integer(request, "workers", 1, minimum=1)
+            max_workers = _integer(request, "max_workers", 1, minimum=1)
+            cache_dir = request.get("cache_dir")
+            if cache_dir is not None and not isinstance(cache_dir, str):
+                raise ValueError("cache_dir must be a path string or omitted")
+            specs = tuple(
+                ExperimentSpec(
+                    name,
+                    build_metric(name),
+                    cases,
+                    undefined_policy=undefined,
+                    workers=workers,
+                )
+                for name in metrics
+            )
+            results = ExperimentMatrix(specs).run(cache_dir=cache_dir, max_workers=max_workers)
+            leaderboard = ExperimentMatrix.leaderboard(results)
+            return {
+                "operation": operation,
+                "results": [
+                    {
+                        "name": item.name,
+                        "metric": item.metric_name,
+                        "cases": item.cases,
+                        "mean_score": item.mean_score,
+                        "cached": item.report.cached,
+                        "errors": list(item.report.errors),
+                    }
+                    for item in results
+                ],
+                "leaderboard": [
+                    {
+                        "rank": item.rank,
+                        "name": item.name,
+                        "metric": item.metric_name,
+                        "mean_score": item.mean_score,
+                        "scored_cases": item.scored_cases,
+                        "total_cases": item.total_cases,
+                        "contract_passed": item.contract_passed,
+                    }
+                    for item in leaderboard
+                ],
+            }
+        raise ValueError("operation must be run, compare, or matrix")
 
 
 def create_server(

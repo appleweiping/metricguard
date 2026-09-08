@@ -29,6 +29,7 @@ on them.
 - Loads third-party metric entry points only after an explicit opt-in.
 - Uses only the Python standard library at runtime.
 - Provides a loopback JSON service for embedding run and paired-comparison workflows.
+- The service also exposes cached multi-metric experiment matrices and deterministic leaderboards.
 
 It also supports metadata slice reports and paired slice-level regression gates
 for cohort-level analysis; see [metadata slices](docs/metadata-slices.md) and
