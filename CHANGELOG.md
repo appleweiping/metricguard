@@ -10,6 +10,10 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add deterministic confidence calibration reports with equal-width bins,
+  Brier score, expected calibration error, maximum calibration error, and a
+  `calibrate` CLI command for nested case metadata.
+
 - Add a strict loopback JSON/HTTP service for metric runs and paired comparisons.
 - Add a service-level matrix operation with resumable per-metric caches and leaderboard output.
 

@@ -26,6 +26,7 @@ from .ocr import (
     run_ocr_benchmark,
 )
 from .registry import MetricRegistry
+from .reliability import calibration_report
 from .reporting import (
     render_comparison_json,
     render_comparison_markdown,
@@ -127,6 +128,15 @@ def _parser() -> argparse.ArgumentParser:
     confidence.add_argument("--seed", type=int, default=0)
     confidence.add_argument("--output", type=Path)
     confidence.set_defaults(handler=_confidence)
+    calibrate = subcommands.add_parser(
+        "calibrate", help="report confidence calibration for binary case outcomes"
+    )
+    calibrate.add_argument("cases", type=Path)
+    calibrate.add_argument("--confidence-field", default="confidence")
+    calibrate.add_argument("--outcome-field", default="correct")
+    calibrate.add_argument("--bins", type=int, default=10)
+    calibrate.add_argument("--output", type=Path)
+    calibrate.set_defaults(handler=_calibrate)
     slices = subcommands.add_parser(
         "slices", help="summarize metric scores by a nested case metadata field"
     )
@@ -419,6 +429,22 @@ def _confidence(args: argparse.Namespace) -> int:
         ],
     }
     rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def _calibrate(args: argparse.Namespace) -> int:
+    _ensure_output_is_distinct(args.output, args.cases)
+    report = calibration_report(
+        load_cases(args.cases),
+        confidence_field=args.confidence_field,
+        outcome_field=args.outcome_field,
+        bins=args.bins,
+    )
+    rendered = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
     else:

@@ -299,6 +299,9 @@ is available in [`benchmarks/`](benchmarks/README.md). See
 - A versioned migration command is available as `migrate-report` when a report
   schema changes.
 - Cross-metric Pearson/Spearman analysis is available through `correlate`.
+- Confidence calibration (Brier score, expected calibration error, and maximum
+  calibration error) is available through `calibrate` and
+  `calibration_report()`.
 
 ## License
 

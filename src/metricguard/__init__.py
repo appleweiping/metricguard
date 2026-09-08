@@ -36,6 +36,7 @@ from .ocr import (
 )
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
+from .reliability import CalibrationBin, CalibrationReport, calibration_report
 from .runner import MetricRunner, RunnerReport
 from .service import MetricService, create_server
 from .slices import (
@@ -64,6 +65,8 @@ from .suite import EvaluationSuite
 __all__ = [
     "AuditFinding",
     "BootstrapConfig",
+    "CalibrationBin",
+    "CalibrationReport",
     "CaseResult",
     "CharacterErrorRate",
     "CommandOcrBackend",
@@ -108,6 +111,7 @@ __all__ = [
     "WordErrorRate",
     "adjust_p_values",
     "build_metric",
+    "calibration_report",
     "compare_by_metadata",
     "compare_case_sets",
     "compare_metadata_family",
