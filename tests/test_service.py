@@ -85,6 +85,44 @@ def test_metric_service_matrix_is_cached_and_ranked(tmp_path) -> None:  # type: 
     assert all(row["cached"] == 2 for row in second["results"])
 
 
+def test_metric_service_calibrates_nested_metadata(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = tmp_path / "calibration.jsonl"
+    cases.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "id": "a",
+                        "reference": "ok",
+                        "prediction": "ok",
+                        "metadata": {"model": {"confidence": 0.9}, "correct": True},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "id": "b",
+                        "reference": "ok",
+                        "prediction": "no",
+                        "metadata": {"model": {"confidence": 0.1}, "correct": False},
+                    }
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    response = MetricService().dispatch(
+        {
+            "operation": "calibrate",
+            "cases": str(cases),
+            "confidence_field": "model.confidence",
+            "bins": 5,
+        }
+    )
+    assert response["report"]["operation"] == "calibration"
+    assert response["report"]["case_count"] == 2
+    assert response["report"]["bin_count"] == 5
+
+
 def test_metric_service_rejects_invalid_port() -> None:
     with pytest.raises(ValueError):
         create_server(port=65536)

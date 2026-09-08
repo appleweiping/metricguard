@@ -21,3 +21,8 @@ options. `create_server()` binds to loopback and serves `POST /v1/dispatch`.
 
 `matrix` accepts a unique `metrics` array and optional `cache_dir`; repeated
 requests reuse verified case-level results and return a stable leaderboard.
+
+`calibrate` evaluates confidence/outcome metadata with deterministic equal-width
+bins and returns the same Brier, ECE, MCE, and bin schema as the `calibrate`
+CLI. Use `confidence_field`, `outcome_field`, and `bins` to select nested
+metadata paths and the number of bins.

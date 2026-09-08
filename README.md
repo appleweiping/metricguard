@@ -30,6 +30,8 @@ on them.
 - Uses only the Python standard library at runtime.
 - Provides a loopback JSON service for embedding run and paired-comparison workflows.
 - The service also exposes cached multi-metric experiment matrices and deterministic leaderboards.
+- The service exposes confidence calibration reports with the same nested metadata fields and
+  equal-width bins as the `calibrate` CLI.
 
 It also supports metadata slice reports and paired slice-level regression gates
 for cohort-level analysis; see [metadata slices](docs/metadata-slices.md) and

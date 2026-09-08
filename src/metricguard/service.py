@@ -15,6 +15,7 @@ from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import load_cases, load_metric_config
 from .metrics import Metric, build_metric
 from .models import UndefinedPolicy
+from .reliability import calibration_report
 from .reporting import comparison_to_dict, report_to_dict
 from .statistics import BootstrapConfig
 from .suite import EvaluationSuite
@@ -126,7 +127,21 @@ class MetricService:
                 minimum_count=_integer(request, "minimum_count", 2, minimum=2),
             )
             return {"operation": operation, "correlation": result.to_dict()}
-        raise ValueError("operation must be run, compare, matrix, or correlate")
+        if operation == "calibrate":
+            confidence_field = request.get("confidence_field", "confidence")
+            outcome_field = request.get("outcome_field", "correct")
+            if not isinstance(confidence_field, str):
+                raise ValueError("confidence_field must be a field path string")
+            if not isinstance(outcome_field, str):
+                raise ValueError("outcome_field must be a field path string")
+            calibration = calibration_report(
+                load_cases(_path(request, "cases")),
+                confidence_field=confidence_field,
+                outcome_field=outcome_field,
+                bins=_integer(request, "bins", 10, minimum=2),
+            )
+            return {"operation": operation, "report": calibration.to_dict()}
+        raise ValueError("operation must be run, compare, matrix, correlate, or calibrate")
 
 
 def create_server(
