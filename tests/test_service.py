@@ -123,6 +123,23 @@ def test_metric_service_calibrates_nested_metadata(tmp_path) -> None:  # type: i
     assert response["report"]["bin_count"] == 5
 
 
+def test_metric_service_runs_ocr_text_benchmark(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    cases = tmp_path / "ocr.jsonl"
+    cases.write_text(
+        "\n".join(
+            [
+                json.dumps({"id": "a", "reference": "hello world", "prediction": "hello world"}),
+                json.dumps({"id": "b", "reference": "hello world", "prediction": "hello"}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    response = MetricService().dispatch({"operation": "ocr", "cases": str(cases)})
+    assert response["report"]["cases"] == 2
+    assert response["report"]["exact_match"]["mean"] == 0.5
+    assert response["report"]["character_error_rate"]["scored"] == 2
+
+
 def test_metric_service_reports_metadata_slices(tmp_path) -> None:  # type: ignore[no-untyped-def]
     cases = tmp_path / "slices.jsonl"
     cases.write_text(

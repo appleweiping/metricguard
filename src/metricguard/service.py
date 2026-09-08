@@ -15,6 +15,7 @@ from .experiment import ExperimentMatrix, ExperimentSpec
 from .io import load_cases, load_metric_config
 from .metrics import Metric, build_metric
 from .models import UndefinedPolicy
+from .ocr import load_ocr_cases, run_ocr_benchmark
 from .reliability import calibration_report
 from .reporting import comparison_to_dict, report_to_dict
 from .slices import compare_by_metadata, compare_metadata_family, summarize_by_metadata
@@ -142,6 +143,11 @@ class MetricService:
                 bins=_integer(request, "bins", 10, minimum=2),
             )
             return {"operation": operation, "report": calibration.to_dict()}
+        if operation == "ocr":
+            ocr_report = run_ocr_benchmark(
+                load_ocr_cases(_path(request, "cases")), undefined_policy=undefined
+            )
+            return {"operation": operation, "report": ocr_report.to_dict()}
         if operation == "slices":
             cases = tuple(load_cases(_path(request, "cases")))
             field = request.get("field")
@@ -205,7 +211,7 @@ class MetricService:
             )
             return {"operation": operation, "family": family.to_dict()}
         raise ValueError(
-            "operation must be run, compare, matrix, correlate, calibrate, slices, "
+            "operation must be run, compare, matrix, correlate, calibrate, ocr, slices, "
             "compare_slices, or compare_family"
         )
 
