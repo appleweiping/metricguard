@@ -24,6 +24,7 @@ from .models import (
     SuiteReport,
     UndefinedPolicy,
 )
+from .native_ocr import WindowsOcrBackend
 from .normalizers import TextNormalizer
 from .ocr import (
     CommandOcrBackend,
@@ -33,6 +34,17 @@ from .ocr import (
     load_ocr_image_cases,
     run_ocr_backend_benchmark,
     run_ocr_benchmark,
+)
+from .ocr_inputs import OcrInputLimits, load_ocr_pages
+from .ocr_pipeline import PageOcrBackend, transcribe_document
+from .ocr_types import (
+    OcrDocumentResult,
+    OcrLine,
+    OcrPageImage,
+    OcrPageInfo,
+    OcrPageResult,
+    OcrProviderIdentity,
+    OcrWord,
 )
 from .ranking import RankingMetric
 from .registry import MetricPluginError, MetricRegistry
@@ -92,8 +104,17 @@ __all__ = [
     "OcrBenchmarkReport",
     "OcrDocumentPage",
     "OcrDocumentReport",
+    "OcrDocumentResult",
     "OcrDocumentSummary",
     "OcrImageCase",
+    "OcrInputLimits",
+    "OcrLine",
+    "OcrPageImage",
+    "OcrPageInfo",
+    "OcrPageResult",
+    "OcrProviderIdentity",
+    "OcrWord",
+    "PageOcrBackend",
     "PairedComparison",
     "RankingMetric",
     "RougeL",
@@ -108,6 +129,7 @@ __all__ = [
     "TagSummary",
     "TextNormalizer",
     "UndefinedPolicy",
+    "WindowsOcrBackend",
     "WordErrorRate",
     "adjust_p_values",
     "build_metric",
@@ -123,6 +145,7 @@ __all__ = [
     "load_ocr_cases",
     "load_ocr_document_cases",
     "load_ocr_image_cases",
+    "load_ocr_pages",
     "migrate_report",
     "paired_comparison",
     "report_confidence_interval",
@@ -131,6 +154,7 @@ __all__ = [
     "run_ocr_benchmark",
     "summarize_by_metadata",
     "summarize_by_tag",
+    "transcribe_document",
 ]
 
 __version__ = "0.2.0"

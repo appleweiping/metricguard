@@ -28,6 +28,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
+ocr = ["Pillow>=10.1,<13", "pypdfium2>=5,<6"]
 dev = [
   "bandit>=1.7",
   "build>=1.2",
@@ -36,6 +37,8 @@ dev = [
   "pytest-cov>=5",
   "ruff>=0.6",
   "twine>=5",
+  "Pillow>=10.1,<13",
+  "pypdfium2>=5,<6",
 ]
 
 [project.scripts]
@@ -52,11 +55,12 @@ Source = "https://github.com/appleweiping/metricguard"
 where = ["src"]
 
 [tool.setuptools.package-data]
-metricguard = ["py.typed"]
+metricguard = ["py.typed", "_windows_ocr.ps1"]
 
 [tool.pytest.ini_options]
 addopts = "-q --strict-markers --cov=metricguard --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
+markers = ["native_ocr: explicit opt-in real Windows.Media.Ocr integration (no network)"]
 
 [tool.coverage.run]
 branch = true

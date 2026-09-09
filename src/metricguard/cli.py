@@ -25,6 +25,7 @@ from .ocr import (
     run_ocr_backend_benchmark,
     run_ocr_benchmark,
 )
+from .ocr_cli import configure_transcribe_parser
 from .registry import MetricRegistry
 from .reliability import calibration_report
 from .reporting import (
@@ -346,6 +347,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     ocr_document.add_argument("--output", type=Path)
     ocr_document.set_defaults(handler=_ocr_document)
+    configure_transcribe_parser(
+        subcommands.add_parser(
+            "transcribe", help="recognize image/PDF pages using installed Windows OCR"
+        )
+    )
     return parser
 
 

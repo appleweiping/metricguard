@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add an optional, reference-free image/PDF transcription pipeline with immutable
+  word geometry, source/provider identities, ordered complete documents and atomic
+  CLI publication. The fixed Windows OCR helper uses installed languages only.
+- Validate raster dimensions, structural text/word budgets and bounded native
+  transport, with portable failure tests and opt-in real PNG/PDF verification.
 - Make resumable cache identities configuration-aware, resolve raw cached values
   under the current undefined policy, and retry metric exceptions on resume.
 - Validate versioned cache rows with integrity checks and save atomic periodic

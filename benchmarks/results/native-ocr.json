@@ -1,0 +1,96 @@
+{
+  "blank_page_preserved": true,
+  "claim_scope": "One local run: 2 distinct clean English uppercase texts, repeated as PNG/PDF, plus blank PNG. Not a real-world OCR accuracy benchmark.",
+  "dependencies": {
+    "Pillow": "12.3.0",
+    "pypdfium2": "5.13.0"
+  },
+  "document_digests": {
+    "authored.png": "a159cc9fa468d33eb7c417f3cf37ddc67a990fe33c8e497591df9b9beaf3b95c",
+    "blank.png": "0e9c5bf466eb4df03657513c6168a02a7ba4abf61d0219316f9dec45a7df280d",
+    "two-pages.pdf": "2d7e04c670e3acbda3a5877e9245ebd36a60fd8c0e0897b569a09d9100a66211"
+  },
+  "font": "Pillow ImageFont.load_default(size=52)",
+  "gold_boundary": "Expected strings are compared only after recognition; provider receives RGB raster and source identity only.",
+  "installed_languages": [
+    "de-DE",
+    "en-GB",
+    "en-US",
+    "ja",
+    "zh-Hans-CN"
+  ],
+  "kind": "authored-synthetic-real-recognizer",
+  "memory_scope": "Fixture generation excluded; Python tracemalloc only, not native decoder/recognizer/child RSS.",
+  "nonblank_page_evaluations": [
+    {
+      "cer": 0.0,
+      "fixture": "authored.png",
+      "page_index": 0,
+      "recognized": "METRIC GUARD 2026",
+      "reference": "METRIC GUARD 2026",
+      "wer": 0.0,
+      "words": 3
+    },
+    {
+      "cer": 0.0,
+      "fixture": "two-pages.pdf",
+      "page_index": 0,
+      "recognized": "METRIC GUARD 2026",
+      "reference": "METRIC GUARD 2026",
+      "wer": 0.0,
+      "words": 3
+    },
+    {
+      "cer": 0.0,
+      "fixture": "two-pages.pdf",
+      "page_index": 1,
+      "recognized": "LOCAL OCR PAGE TWO",
+      "reference": "LOCAL OCR PAGE TWO",
+      "wer": 0.0,
+      "words": 4
+    }
+  ],
+  "pdf_text_layer_characters": [
+    0,
+    0
+  ],
+  "peak_traced_python_bytes": 5972405,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "provider": {
+    "configuration_sha256": "56d84b5be1fedd0383794e74b85704c8b6bbcbe5063ad30a792e3bb6ac911835",
+    "implementation_sha256": "b71db456817f3bc7b78ef664f44a9ce6fcab2818ea2524cf0eb75d6b1864c83d",
+    "language": "en-US",
+    "provider": "windows-media-ocr",
+    "version": "10.0.26200.0"
+  },
+  "python": "3.12.13",
+  "runtime_sha256": {
+    "_windows_ocr.ps1": "b71db456817f3bc7b78ef664f44a9ce6fcab2818ea2524cf0eb75d6b1864c83d",
+    "native_ocr.py": "f5c67e62dbc02d9eb9fc3f36c88b63508c9bc88eb2b50937ac261bd864e8965b",
+    "ocr_inputs.py": "f981c0ff92da62704624789edf70f906474d6109a578583654c3c196f5b58e8d",
+    "ocr_pipeline.py": "604f4ba634c2688d0f77615336a6dc7b46c99d5eab784b81c13c0dabd1f11878",
+    "ocr_types.py": "f59d18778a008b98aaf941c1c40acddd92d3cbe59711a9d3977c9e476c40df48"
+  },
+  "sources": {
+    "authored.png": {
+      "bytes": 9441,
+      "sha256": "8bb2aee9c2f78b122fb5da3693781fa8a28dd2ee04ca53c7317c68af003e4f7f"
+    },
+    "blank.png": {
+      "bytes": 1270,
+      "sha256": "4b32c6a5897781096dc9cae0790de5ea5a9b9a10a064386ae76829b749d7d39b"
+    },
+    "two-pages.pdf": {
+      "bytes": 23318,
+      "sha256": "4ace7a6a9131d327ca4dbfa8e4cb2374e7fd6f38f2344b691aa0e4d9a215b05e"
+    }
+  },
+  "timings": {
+    "authored.png_decode_and_recognize_seconds": 0.9428868999966653,
+    "blank.png_decode_and_recognize_seconds": 0.9599689000024227,
+    "native_initialization_seconds": 0.7842644000047585,
+    "two-pages.pdf_decode_and_recognize_seconds": 2.0319455999997444,
+    "verify_raster_only_pdf_seconds": 0.017634299998462666
+  },
+  "verification_script_sha256": "92ac4b10cf79487ac7f0227afe4363600bb3d24ff42a5d94808b54c0d883841c"
+}

@@ -27,7 +27,9 @@ on them.
 - Produces deterministic JSON for automation and Markdown for review.
 - Compares aligned model runs with deterministic paired resampling and CI gates.
 - Loads third-party metric entry points only after an explicit opt-in.
-- Uses only the Python standard library at runtime.
+- Uses only the Python standard library for metric evaluation; local image/PDF OCR is an optional extra.
+- Transcribes images and rasterized PDFs using an explicitly selected, already-installed Windows
+  OCR recognizer, with word geometry, source/provider hashes and ordered document assembly.
 - Provides a loopback JSON service for embedding run and paired-comparison workflows.
 - The service also exposes cached multi-metric experiment matrices and deterministic leaderboards.
 - The service exposes confidence calibration reports with the same nested metadata fields and
@@ -37,8 +39,9 @@ It also supports metadata slice reports and paired slice-level regression gates
 for cohort-level analysis; see [metadata slices](docs/metadata-slices.md) and
 [metadata slice comparisons](docs/metadata-slice-comparisons.md).
 
-MetricGuard is an evaluation reliability tool. It is not a leaderboard service, a
-model runner, or a claim that every metric should be symmetric.
+MetricGuard is an evaluation reliability tool with an optional local OCR execution path.
+It is not a hosted model service, a general-purpose model trainer, or a claim that every metric
+should be symmetric. See [native OCR](docs/native-ocr.md) for supported platforms and limits.
 
 ## Architecture
 
@@ -65,16 +68,17 @@ change from “skip” to “zero” is visible in configuration and review.
 
 ## Install
 
-Install the latest source from GitHub:
+These examples describe the unreleased `feat/whole-repository-alignment` branch, not the
+older `main` branch or a released PyPI package. Install that development source explicitly:
 
 ```bash
-python -m pip install "git+https://github.com/appleweiping/metricguard.git"
+python -m pip install "git+https://github.com/appleweiping/metricguard.git@feat/whole-repository-alignment"
 ```
 
 For development:
 
 ```bash
-git clone https://github.com/appleweiping/metricguard.git
+git clone --branch feat/whole-repository-alignment https://github.com/appleweiping/metricguard.git
 cd metricguard
 python -m pip install -e ".[dev]"
 ```
