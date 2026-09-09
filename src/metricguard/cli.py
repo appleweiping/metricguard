@@ -26,6 +26,7 @@ from .ocr import (
     run_ocr_benchmark,
 )
 from .ocr_cli import configure_transcribe_parser
+from .ocr_region_cli import configure_region_transcribe_parser
 from .registry import MetricRegistry
 from .reliability import calibration_report
 from .reporting import (
@@ -350,6 +351,11 @@ def _parser() -> argparse.ArgumentParser:
     configure_transcribe_parser(
         subcommands.add_parser(
             "transcribe", help="recognize image/PDF pages using installed Windows OCR"
+        )
+    )
+    configure_region_transcribe_parser(
+        subcommands.add_parser(
+            "transcribe-regions", help="recognize source-bound image/PDF regions using Windows OCR"
         )
     )
     return parser

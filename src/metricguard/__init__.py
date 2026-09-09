@@ -37,6 +37,26 @@ from .ocr import (
 )
 from .ocr_inputs import OcrInputLimits, load_ocr_pages
 from .ocr_pipeline import PageOcrBackend, transcribe_document
+from .ocr_region_pipeline import (
+    OcrRegionDocumentResult,
+    OcrRegionPageResult,
+    OcrRegionPipelineLimits,
+    OcrRegionResult,
+    transcribe_region_document,
+    transcribe_region_pages,
+)
+from .ocr_regions import (
+    OcrRegion,
+    OcrRegionCrop,
+    OcrRegionLimits,
+    OcrRegionPlan,
+    PixelBox,
+    crop_ocr_region,
+    detect_vertical_regions,
+    explicit_region_plan,
+    iter_region_crops,
+    map_region_result,
+)
 from .ocr_types import (
     OcrDocumentResult,
     OcrLine,
@@ -113,9 +133,18 @@ __all__ = [
     "OcrPageInfo",
     "OcrPageResult",
     "OcrProviderIdentity",
+    "OcrRegion",
+    "OcrRegionCrop",
+    "OcrRegionDocumentResult",
+    "OcrRegionLimits",
+    "OcrRegionPageResult",
+    "OcrRegionPipelineLimits",
+    "OcrRegionPlan",
+    "OcrRegionResult",
     "OcrWord",
     "PageOcrBackend",
     "PairedComparison",
+    "PixelBox",
     "RankingMetric",
     "RougeL",
     "RunnerReport",
@@ -141,11 +170,16 @@ __all__ = [
     "correct_slice_p_values",
     "correlate_reports",
     "create_server",
+    "crop_ocr_region",
+    "detect_vertical_regions",
     "evaluate_stream",
+    "explicit_region_plan",
+    "iter_region_crops",
     "load_ocr_cases",
     "load_ocr_document_cases",
     "load_ocr_image_cases",
     "load_ocr_pages",
+    "map_region_result",
     "migrate_report",
     "paired_comparison",
     "report_confidence_interval",
@@ -155,6 +189,8 @@ __all__ = [
     "summarize_by_metadata",
     "summarize_by_tag",
     "transcribe_document",
+    "transcribe_region_document",
+    "transcribe_region_pages",
 ]
 
 __version__ = "0.2.0"

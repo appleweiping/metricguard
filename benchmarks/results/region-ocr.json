@@ -1,0 +1,383 @@
+{
+  "cer_wer_normalization": {
+    "collapse_whitespace": true,
+    "lowercase": false,
+    "strip_punctuation": false,
+    "unicode_form": "NFC"
+  },
+  "dependencies": {
+    "Pillow": "12.3.0",
+    "pypdfium2": "5.13.0"
+  },
+  "detector": {
+    "min_gutter_width": 100,
+    "min_region_width": 200,
+    "white_threshold": 255
+  },
+  "evidence_scope": "Five authored source pages in four files; one column layout repeated as PNG/PDF. Includes a deliberate gutter-blocking negative case. Not real-world OCR accuracy or learned layout detection evidence; all scores, including regressions, retained.",
+  "font": "Pillow ImageFont.load_default(size=42)",
+  "format": "metricguard.region-ocr-benchmark.v1",
+  "gold_boundary": "References enter scoring only after recognition; backend receives RGB and identity.",
+  "independent_checks": {
+    "bridged-columns.png": {
+      "crops": 1,
+      "mapped_words": 8,
+      "page_spans": 1,
+      "pages": 1,
+      "region_spans": 1
+    },
+    "columns-and-blank.pdf": {
+      "crops": 3,
+      "mapped_words": 8,
+      "page_spans": 2,
+      "pages": 2,
+      "region_spans": 3
+    },
+    "columns.png": {
+      "crops": 2,
+      "mapped_words": 8,
+      "page_spans": 1,
+      "pages": 1,
+      "region_spans": 2
+    },
+    "single.png": {
+      "crops": 1,
+      "mapped_words": 4,
+      "page_spans": 1,
+      "pages": 1,
+      "region_spans": 1
+    }
+  },
+  "kind": "original-authored-layouts-with-real-native-recognition",
+  "memory_scope": "Python allocations during recognition and verification only; not native/child RSS.",
+  "page_evaluations": [
+    {
+      "detector_reason": "split",
+      "document_sha256": "af71dd47e9b93ffe6b03a3a230dd9a5a138fb0380372d85c0dee5216b5603390",
+      "fixture": "columns.png",
+      "page_index": 0,
+      "plan_sha256": "c7ada0b083b1d06a56a2694023c997ce95410aa5a38a1a0c421d0e0a7bb214f2",
+      "reference": "ALPHA ROUTE\nBETA LANTERN\n\nGAMMA CHECK\nDELTA QUIET",
+      "region_recognition_calls": 2,
+      "region_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "region_text": "ALPHA ROUTE\nBETA LANTERN\n\nGAMMA CHECK\nDELTA QUIET",
+      "regions": 2,
+      "status": "recognized",
+      "whole_recognition_calls": 1,
+      "whole_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": false,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "whole_text": "ALPHA ROUTE\nBETA LANTERN\nGAMMA CHECK\nDELTA QUIET"
+    },
+    {
+      "detector_reason": "split",
+      "document_sha256": "160c70c555184eb3437d8526d6d82f31aa8ac02a9fd0c9e5930201b06070bff6",
+      "fixture": "columns-and-blank.pdf",
+      "page_index": 0,
+      "plan_sha256": "92ec8e4a63622b237997af79bc31ba59689a954a3f7452de6e4ee9bec4c36b1a",
+      "reference": "ALPHA ROUTE\nBETA LANTERN\n\nGAMMA CHECK\nDELTA QUIET",
+      "region_recognition_calls": 2,
+      "region_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "region_text": "ALPHA ROUTE\nBETA LANTERN\n\nGAMMA CHECK\nDELTA QUIET",
+      "regions": 2,
+      "status": "recognized",
+      "whole_recognition_calls": 1,
+      "whole_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": false,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "whole_text": "ALPHA ROUTE\nBETA LANTERN\nGAMMA CHECK\nDELTA QUIET"
+    },
+    {
+      "detector_reason": "blank",
+      "document_sha256": "160c70c555184eb3437d8526d6d82f31aa8ac02a9fd0c9e5930201b06070bff6",
+      "fixture": "columns-and-blank.pdf",
+      "page_index": 1,
+      "plan_sha256": "42712068dcc5cea10a63fd906e607f6e444753f30977d2d6ec0d05a3e7bf7852",
+      "reference": "",
+      "region_recognition_calls": 1,
+      "region_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "reference_characters": 0
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "reference_words": 0
+        },
+        "wer_undefined_reason": null
+      },
+      "region_text": "",
+      "regions": 1,
+      "status": "recognized_empty",
+      "whole_recognition_calls": 1,
+      "whole_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "reference_characters": 0
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "reference_words": 0
+        },
+        "wer_undefined_reason": null
+      },
+      "whole_text": ""
+    },
+    {
+      "detector_reason": "no_split",
+      "document_sha256": "13caf7ebc53a6376e1230dafa2f80f4a6db8f3a1ba3135a0dd022176af35c760",
+      "fixture": "bridged-columns.png",
+      "page_index": 0,
+      "plan_sha256": "7bb552f9b2a65b06e42b40761a7aba7a10a063f1df9602d2354b2a03b16f0fe5",
+      "reference": "ALPHA ROUTE\nBETA LANTERN\n\nGAMMA CHECK\nDELTA QUIET",
+      "region_recognition_calls": 1,
+      "region_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": false,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "region_text": "ALPHA ROUTE\nBETA LANTERN\nGAMMA CHECK\nDELTA QUIET",
+      "regions": 1,
+      "status": "recognized",
+      "whole_recognition_calls": 1,
+      "whole_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 48,
+          "reference_characters": 48
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": false,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 8,
+          "reference_words": 8
+        },
+        "wer_undefined_reason": null
+      },
+      "whole_text": "ALPHA ROUTE\nBETA LANTERN\nGAMMA CHECK\nDELTA QUIET"
+    },
+    {
+      "detector_reason": "no_split",
+      "document_sha256": "bfbd1d8d24e464a447a4f733fbdda69e6d160f29a6a112e0d110782e22efaa96",
+      "fixture": "single.png",
+      "page_index": 0,
+      "plan_sha256": "f0dcc0bdffe0d1a51fd6feb04fb5e5d7f73571d858fd253f216077e32d55e767",
+      "reference": "SINGLE ROUTE\nLANTERN CHECK",
+      "region_recognition_calls": 1,
+      "region_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 26,
+          "reference_characters": 26
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 4,
+          "reference_words": 4
+        },
+        "wer_undefined_reason": null
+      },
+      "region_text": "SINGLE ROUTE\nLANTERN CHECK",
+      "regions": 1,
+      "status": "recognized",
+      "whole_recognition_calls": 1,
+      "whole_scores": {
+        "cer": 0.0,
+        "cer_details": {
+          "distance": 0,
+          "prediction_characters": 26,
+          "reference_characters": 26
+        },
+        "cer_undefined_reason": null,
+        "exact_normalized": true,
+        "exact_raw": true,
+        "wer": 0.0,
+        "wer_details": {
+          "distance": 0,
+          "prediction_words": 4,
+          "reference_words": 4
+        },
+        "wer_undefined_reason": null
+      },
+      "whole_text": "SINGLE ROUTE\nLANTERN CHECK"
+    }
+  ],
+  "pdf_text_layer_characters": [
+    0,
+    0
+  ],
+  "peak_traced_python_bytes": 10714191,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "provider": {
+    "configuration_sha256": "56d84b5be1fedd0383794e74b85704c8b6bbcbe5063ad30a792e3bb6ac911835",
+    "implementation_sha256": "b71db456817f3bc7b78ef664f44a9ce6fcab2818ea2524cf0eb75d6b1864c83d",
+    "language": "en-US",
+    "provider": "windows-media-ocr",
+    "version": "10.0.26200.0"
+  },
+  "python": "3.12.13",
+  "runtime_and_fixture_files_unchanged": true,
+  "runtime_sha256": {
+    "__init__.py": "b41e759ba57de0ba7bb12c6f87b16741d1c2258468d52224504ccb77d4e669af",
+    "__main__.py": "082c50499df1c6d21c5b03528f270631837e8e37d044be29150970b2604ecbc2",
+    "_runner_cache.py": "f273d09e92212c1f046858fdf4f9683ccbf4621c5f54ed3517e7a2c3a3c78b04",
+    "_windows_ocr.ps1": "b71db456817f3bc7b78ef664f44a9ce6fcab2818ea2524cf0eb75d6b1864c83d",
+    "advanced_metrics.py": "8d28ce654cd3e79e876630128431474e23e355d568de400bbb95a537756e828a",
+    "cli.py": "40ea74caa2cf0ce2e627edfa4b851f57ec039888d7562a89bab0c78183319cdc",
+    "comparison.py": "56d0f72deec6bf4a85ffe71abe9b4818b12f141e4f6e638e0d96385da964aec2",
+    "contracts.py": "7db51c7af78f26294afcc875f738da1b4baf17bffc8c3722d66a8fc8d2d7d273",
+    "correlation.py": "ac8f10cbe04f6d5b0374d4edc103682688a70dcb2b02017b17305fa67f2f176b",
+    "document.py": "4ed596ea7cee8f5a891577fa6f407471c15565fdb9fb19982e9988826f321aaa",
+    "edit_metrics.py": "d8f085e0605595b990967587387db47d62c31a7a9666337edc90995a65ffe84c",
+    "experiment.py": "b86e48bb694e7758058eb33ea63e5a64e7ce2c601cb54b9aaa9ce381ca96dc29",
+    "io.py": "4304b20b75362ee229a6bd09389f905d685a2f7bd3fadf39bf032af84369fd29",
+    "metrics.py": "eea1859bd6bc9c99ce7040718418e2584d05778581c93699f20fd73a6b7fcca0",
+    "migration.py": "e70682cb6754277150ce2f448577d5ac1c0faa9a0e89c58fcb151ca668a56da4",
+    "models.py": "44e7d22c13d9567159505b4a3d7a019bd9b879a1973d233b764db495fc1c05d5",
+    "native_ocr.py": "6c1b3405651a1e626d6422f45cf1ab1357a6cdc6f3a6b1e116e0b184c47adb1d",
+    "normalizers.py": "f147f758333f22a8e75792f577ac23287451895f0cb251bba2e78cc058a79406",
+    "ocr.py": "61a851e1cfb095c0e298fbe226d08e69b97a0bd67762ea5bcb356b18f2c33b15",
+    "ocr_cli.py": "76b8f8a04d26f688887fc34cd4e786ccf27f6c2a63fdce182627c00622567137",
+    "ocr_inputs.py": "f981c0ff92da62704624789edf70f906474d6109a578583654c3c196f5b58e8d",
+    "ocr_pipeline.py": "604f4ba634c2688d0f77615336a6dc7b46c99d5eab784b81c13c0dabd1f11878",
+    "ocr_region_cli.py": "3f77955dafd6e16b93abd0ba75bf41ac6aa04ef3869d1d9d6ef0d2e8751baac8",
+    "ocr_region_pipeline.py": "25554f4ba18530689b4c8caa9f4ca1cc68e002f8856bc008d1ad1505d2940b95",
+    "ocr_regions.py": "611cf99dbf0b8db5e216f321c194e4b0852e7fd4bb2e76b4a784a525516c1769",
+    "ocr_types.py": "f59d18778a008b98aaf941c1c40acddd92d3cbe59711a9d3977c9e476c40df48",
+    "ranking.py": "7a252e701ee3159cbd38916f4f2df0c9b961f513a73fe1b810a9476f850d8a74",
+    "registry.py": "6b22269ff86a7a2ff617d3289cba198375101f5c1c17810cdebd6f74e67fa17c",
+    "reliability.py": "5d99c4494c84762dc438ec5278c18fb7c46cc276401ba61ba7bf2421bfcb9adf",
+    "reporting.py": "e5f789a10ba6234846cefba57e8a66f229d2812bf55631e817a2a97e9fb71988",
+    "runner.py": "c58481f889bd8804e3ce65353e10d27960ea08913a342a60cc545d32bd8d574d",
+    "service.py": "39d65d91f084bc7c0e48a52d02d2092ac2dfd9bd0e9507fd8ff804cd286f92f8",
+    "slices.py": "2262b060d8bcca6e67329962a1617ebbb046c1216783e774ebe0bcb2a89bdabe",
+    "statistics.py": "3b03261f59ebf1b9d65ab753eab4fe65c5e64ed6b7da18a9d4776f5b0c8f1d40",
+    "streaming.py": "f36d5eeb7d9ad6ce32b40b208fc74a1208895697b1426b9948f4a676616424eb",
+    "suite.py": "1609c21b310812a4940e2afc5a5a5082a88a951e696c786beacbbdf22215ee0b"
+  },
+  "script_sha256": "8799aca06195eb956da2d078edb75ca3f961a7a5479eeaaa936fb045b6c77293",
+  "sources": {
+    "bridged-columns.png": {
+      "bytes": 12899,
+      "sha256": "2c2fba34eb6f0d9b1028c1d22d0d33314e2f180e652ce5cd1d26d65016d0ba02"
+    },
+    "columns-and-blank.pdf": {
+      "bytes": 27906,
+      "sha256": "20bba98d5e4c26bd9de05f39f446f329737950fbff8110ac8704168b525743ea"
+    },
+    "columns.png": {
+      "bytes": 12883,
+      "sha256": "b7dac11e4e687dac905ab290248487498b27eb10752e09cff43f33eab88eb3d8"
+    },
+    "single.png": {
+      "bytes": 10074,
+      "sha256": "113ed702b5577041580ed95316f7f1d3f95b683bab1f71e2780fda894e221645"
+    }
+  },
+  "timings": {
+    "bridged-columns.png:regions_seconds": 2.1719631000014488,
+    "bridged-columns.png:whole_seconds": 1.0053888000038569,
+    "columns-and-blank.pdf:regions_seconds": 18.40015719999792,
+    "columns-and-blank.pdf:whole_seconds": 2.1771835000035935,
+    "columns.png:regions_seconds": 5.884072300003027,
+    "columns.png:whole_seconds": 1.0436865000010584,
+    "single.png:regions_seconds": 4.83010299999296,
+    "single.png:whole_seconds": 1.1469060000017635
+  }
+}

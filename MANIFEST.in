@@ -4,3 +4,4 @@ recursive-include examples *.json *.jsonl
 recursive-include benchmarks *.py *.md
 recursive-include src/metricguard *.ps1
 include benchmarks/results/native-ocr.json
+include benchmarks/results/region-ocr.json

@@ -21,6 +21,13 @@ All notable changes follow the principles of Keep a Changelog.
 
 ## [Unreleased]
 
+- Add source-bound region OCR plans, explicit column-major selections, a narrow
+  full-height-whitespace detector, exact RGB crops and original-page coordinates.
+- Run complete multi-region image/PDF transcription through the installed native
+  backend, retaining page/region text spans, omissions and bounded admission.
+- Add an exclusive-output region CLI, malformed-input and allocation-boundary
+  regressions, and an authored-layout benchmark retaining negative OCR outcomes.
+
 - Add deterministic confidence calibration reports with equal-width bins,
   Brier score, expected calibration error, maximum calibration error, and a
   `calibrate` CLI command for nested case metadata.

@@ -43,6 +43,15 @@ MetricGuard is an evaluation reliability tool with an optional local OCR executi
 It is not a hosted model service, a general-purpose model trainer, or a claim that every metric
 should be symmetric. See [native OCR](docs/native-ocr.md) for supported platforms and limits.
 
+The development branch also provides [region-first image/PDF transcription](docs/ocr-region-pipeline.md):
+source-bound [explicit region plans or full-height whitespace splits](docs/ocr-regions.md),
+real per-crop recognition, original-page word coordinates and ordered region/page text spans.
+The [`transcribe-regions` CLI](docs/ocr-region-cli.md) publishes complete private results without
+overwriting an existing output. Explicit omissions remain visible; blank pages are still recognized.
+The [authored-layout benchmark](docs/region-ocr-benchmark.md) checks pixel provenance and actual
+native execution. This narrow geometric heuristic is not learned layout understanding or broad
+OCR accuracy evidence; the existing whole-page API and output format remain unchanged.
+
 ## Architecture
 
 ```mermaid
