@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pytest
@@ -18,13 +17,10 @@ def test_runner_order_parallel_and_cache(tmp_path: Path) -> None:
     assert first.mean_score == 0.5 and first.cached == 0
     second = MetricRunner(cases(), metric, workers=2).run(cache=cache)
     assert second.cached == 2 and second.results == first.results
-    rows = [json.loads(line) for line in cache.read_text(encoding="utf-8").splitlines()]
-    rows[0]["fingerprint"] = "0" * 64
-    cache.write_text(
-        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8"
-    )
-    third = MetricRunner(cases(), metric).run(cache=cache)
+    changed = [EvaluationCase("a", "hello", "HELLO"), cases()[1]]
+    third = MetricRunner(changed, metric).run(cache=cache)
     assert third.cached == 1
+    assert third.mean_score == 0.0
 
 
 def test_undefined_policies_and_errors(tmp_path: Path) -> None:

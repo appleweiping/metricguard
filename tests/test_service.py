@@ -85,6 +85,26 @@ def test_metric_service_matrix_is_cached_and_ranked(tmp_path) -> None:  # type: 
     assert all(row["cached"] == 2 for row in second["results"])
 
 
+def test_cached_matrix_uses_current_undefined_policy(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    path = tmp_path / "undefined.jsonl"
+    path.write_text('{"id":"a","reference":"invalid","prediction":"1"}\n', encoding="utf-8")
+    request = {
+        "operation": "matrix",
+        "cases": str(path),
+        "metrics": ["numeric_equivalence"],
+        "cache_dir": str(tmp_path / "cache"),
+        "undefined": "zero",
+    }
+    service = MetricService()
+    assert service.dispatch(request)["results"][0]["mean_score"] == 0.0
+    request["undefined"] = "one"
+    second = service.dispatch(request)["results"][0]
+    assert second["mean_score"] == 1.0 and second["cached"] == 1
+    request["undefined"] = "error"
+    with pytest.raises(ValueError, match="undefined"):
+        service.dispatch(request)
+
+
 def test_metric_service_calibrates_nested_metadata(tmp_path) -> None:  # type: ignore[no-untyped-def]
     cases = tmp_path / "calibration.jsonl"
     cases.write_text(

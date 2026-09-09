@@ -44,3 +44,25 @@ must be deterministic across repeated calls and must document whether higher or
 lower values are better; pass the corresponding CLI `--direction`. MetricGuard
 uses the same metric configuration on baseline and candidate to prevent accidental
 same-name/different-option comparisons.
+
+## Resumable cache identity
+
+Custom metrics used by `MetricRunner` or `ExperimentMatrix` with caching must
+provide `cache_identity() -> dict[str, Any]`. The method returns a non-empty,
+deterministic JSON object describing every score-affecting option and an
+implementation revision. The runner also includes the metric's class and name.
+
+```python
+class DomainScore:
+    # name, initialization, and evaluate are omitted here.
+    def cache_identity(self) -> dict[str, object]:
+        return {"revision": "2", "threshold": self.threshold, "model_sha": self.model_sha}
+```
+
+Include versions or content digests of external models, prompts, and data on which
+the score depends. Change the identity when evaluation behavior changes. Exclude
+operational state such as call counters; keep score configuration fixed throughout
+a run. The runner cannot infer hidden model changes from a name. A missing or
+invalid identity fails before cached evaluation starts. Plugins that do not use
+caching continue to require only the existing `name` and `evaluate` protocol.
+This hook does not discover or load any additional plugins.

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Make resumable cache identities configuration-aware, resolve raw cached values
+  under the current undefined policy, and retry metric exceptions on resume.
+- Validate versioned cache rows with integrity checks and save atomic periodic
+  checkpoints, including completed work before an evaluation failure.
+- Require an explicit `cache_identity()` contract for custom metrics when caching;
+  uncached execution retains the existing metric protocol and non-JSON inputs.
 - Add deterministic cross-metric Pearson and Spearman correlation reports with
   pairwise-complete score alignment, explicit missing-data reasons, a CLI
   `correlate` command, and loopback-service support.

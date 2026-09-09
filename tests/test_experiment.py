@@ -37,6 +37,25 @@ def test_matrix_rejects_duplicate_names_and_invalid_workers() -> None:
         ExperimentSpec("not valid", metric, cases())
 
 
+def test_same_experiment_names_recompute_changed_configuration(tmp_path: Path) -> None:
+    data = (EvaluationCase("a", "HELLO", "hello"),)
+    first = ExperimentMatrix(
+        [ExperimentSpec("same", build_metric("exact_match"), data, workers=2)]
+    ).run(cache_dir=tmp_path, max_workers=2)
+    changed = ExperimentMatrix(
+        [
+            ExperimentSpec(
+                "same",
+                build_metric({"kind": "exact_match", "normalizer": {"lowercase": True}}),
+                data,
+                workers=2,
+            )
+        ]
+    ).run(cache_dir=tmp_path, max_workers=2)
+    assert first[0].mean_score == 0.0
+    assert changed[0].mean_score == 1.0 and changed[0].report.cached == 0
+
+
 def test_leaderboard_is_deterministic_and_exposes_contract_state(tmp_path: Path) -> None:
     specs = (
         ExperimentSpec("high", build_metric("exact_match"), cases()),

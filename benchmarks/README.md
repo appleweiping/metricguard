@@ -16,5 +16,7 @@ median with identical arguments. The script intentionally keeps generated inputs
 memory so filesystem cache behavior does not dominate metric timings.
 
 `benchmark_fixture.py` runs token F1 and word error rate over the checked-in
-baseline case file, recording its digest and environment. This fixture-real run
-is separate from generated throughput and bootstrap workloads.
+baseline case file, recording its digest and environment. Its
+`kind: checked-in-example` identifies a small handcrafted smoke workload; it
+does not constitute real-data or performance validation. It is separate from
+generated throughput and bootstrap workloads.

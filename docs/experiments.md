@@ -19,7 +19,11 @@ print(ExperimentMatrix.means(results))
 
 The matrix coordinates evaluation; it does not make custom metrics thread-safe.
 Use the metric's documented concurrency contract and keep cache directories
-private to one experiment configuration.
+private to one simultaneous matrix run. Sequential runs may change metric
+configuration or undefined-value policy: configuration changes invalidate the
+affected cell's scores, and cached raw values follow the new undefined policy.
+See the [runner contract](runner.md) for checkpoint validation and custom metric
+identity requirements.
 
 For review-ready ordering, call `ExperimentMatrix.leaderboard(results)`. It
 uses deterministic tie-aware ranks, puts unresolved cells last, and reports
