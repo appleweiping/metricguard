@@ -54,7 +54,7 @@
     0,
     0
   ],
-  "peak_traced_python_bytes": 5972405,
+  "peak_traced_python_bytes": 5972553,
   "platform": "Windows-11-10.0.26200-SP0",
   "provider": {
     "configuration_sha256": "56d84b5be1fedd0383794e74b85704c8b6bbcbe5063ad30a792e3bb6ac911835",
@@ -66,7 +66,7 @@
   "python": "3.12.13",
   "runtime_sha256": {
     "_windows_ocr.ps1": "b71db456817f3bc7b78ef664f44a9ce6fcab2818ea2524cf0eb75d6b1864c83d",
-    "native_ocr.py": "f5c67e62dbc02d9eb9fc3f36c88b63508c9bc88eb2b50937ac261bd864e8965b",
+    "native_ocr.py": "6c1b3405651a1e626d6422f45cf1ab1357a6cdc6f3a6b1e116e0b184c47adb1d",
     "ocr_inputs.py": "f981c0ff92da62704624789edf70f906474d6109a578583654c3c196f5b58e8d",
     "ocr_pipeline.py": "604f4ba634c2688d0f77615336a6dc7b46c99d5eab784b81c13c0dabd1f11878",
     "ocr_types.py": "f59d18778a008b98aaf941c1c40acddd92d3cbe59711a9d3977c9e476c40df48"
@@ -86,11 +86,11 @@
     }
   },
   "timings": {
-    "authored.png_decode_and_recognize_seconds": 0.9428868999966653,
-    "blank.png_decode_and_recognize_seconds": 0.9599689000024227,
-    "native_initialization_seconds": 0.7842644000047585,
-    "two-pages.pdf_decode_and_recognize_seconds": 2.0319455999997444,
-    "verify_raster_only_pdf_seconds": 0.017634299998462666
+    "authored.png_decode_and_recognize_seconds": 1.086494399998628,
+    "blank.png_decode_and_recognize_seconds": 0.9703391000002739,
+    "native_initialization_seconds": 0.8426227000018116,
+    "two-pages.pdf_decode_and_recognize_seconds": 2.271100599995407,
+    "verify_raster_only_pdf_seconds": 0.01833220000116853
   },
   "verification_script_sha256": "92ac4b10cf79487ac7f0227afe4363600bb3d24ff42a5d94808b54c0d883841c"
 }

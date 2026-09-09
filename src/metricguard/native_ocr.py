@@ -31,6 +31,9 @@ def _bounded_process(argv: tuple[str, ...], data: bytes, *, timeout: float, limi
     """
     if len(data) > 64 * 1024 * 1024:
         raise ValueError("native OCR request exceeds 64 MiB")
+    creation_flags = 0
+    if sys.platform == "win32":
+        creation_flags = subprocess.CREATE_NO_WINDOW
     try:
         process = subprocess.Popen(  # nosec B603
             argv,
@@ -39,7 +42,7 @@ def _bounded_process(argv: tuple[str, ...], data: bytes, *, timeout: float, limi
             stderr=subprocess.PIPE,
             shell=False,
             bufsize=0,
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            creationflags=creation_flags,
         )
     except OSError as error:
         raise ValueError("cannot start native OCR helper") from error
